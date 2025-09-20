@@ -1,6 +1,7 @@
 #!/bin/bash
 # install_all_emulators_debian_nobackslash.sh
 # Debian emulator installer with automatic yes, no line continuations
+# rewrite from netbsd
 
 echo "Choose installation method:"
 echo "1) Install prebuilt packages (apt)"

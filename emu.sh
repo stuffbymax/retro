@@ -1,46 +1,26 @@
 #!/bin/sh
-# install_all_emulators.sh
-# Installs/updates all emulators, RetroArch, and all RetroArch cores on NetBSD
+# install_all_emulators_manual.sh
+# Installs all major emulators and RetroArch with cores on NetBSD using pkgin
 
-PKGSRC_DIR="/usr/pkgsrc"   # Adjust if pkgsrc is elsewhere
-
-# Step 1: Update pkgsrc tree
-echo "Updating pkgsrc..."
-cd "$PKGSRC_DIR" || exit 1
-sudo cvs -q up -dP  # or `git pull` if using pkgsrc-git
-
-# Step 2: Install or update all emulators
-echo "Installing/updating all emulators..."
-for emulator_dir in "$PKGSRC_DIR"/emulators/*; do
-    if [ -d "$emulator_dir" ]; then
-        echo "Installing/updating $(basename "$emulator_dir")..."
-        cd "$emulator_dir" || continue
-        sudo make install clean
-    fi
-done
-
-# Step 3: Install or update RetroArch
-if [ -d "$PKGSRC_DIR/emulators/retroarch" ]; then
-    echo "Installing/updating RetroArch..."
-    cd "$PKGSRC_DIR/emulators/retroarch" || exit 1
-    sudo make install clean
-fi
-
-# Step 4: Install or update all RetroArch cores
-if [ -d "$PKGSRC_DIR/emulators/retroarch-cores" ]; then
-    echo "Installing/updating all RetroArch cores..."
-    for core_dir in "$PKGSRC_DIR"/emulators/retroarch-cores/*; do
-        if [ -d "$core_dir" ]; then
-            echo "Installing/updating $(basename "$core_dir")..."
-            cd "$core_dir" || continue
-            sudo make install clean
-        fi
-    done
-fi
-
-# Step 5: Update all installed packages via pkgin
-echo "Updating all installed packages..."
+echo "Updating pkgin package database..."
 sudo pkgin update
-sudo pkgin upgrade
 
-echo "All emulators, RetroArch, and RetroArch cores are installed and up to date!"
+echo "Installing PC & DOS emulators..."
+sudo pkgin install -y qemu bochs dosbox 8086tiny tme applyppf
+
+echo "Installing Console emulators..."
+sudo pkgin install -y bsnes snes9x fceux genesis-plus-gx mednafen ppsspp pcsx2 dolphin cygne-sdl basiliskII raine vecx
+
+echo "Installing Home computer emulators..."
+sudo pkgin install -y atari800 aranym arcem xbeeb b-em vice arnold
+
+echo "Installing Arcade & Retro front-end emulators..."
+sudo pkgin install -y advancemame blastem cannonball blinkensim raine emulationstation
+
+echo "Installing RetroArch and all available cores..."
+sudo pkgin install -y retroarch retroarch-cores/*
+
+echo "Upgrading all installed packages to latest versions..."
+sudo pkgin upgrade -y
+
+echo "All emulators, RetroArch, and RetroArch cores have been installed and updated!"

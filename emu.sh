@@ -1,26 +1,68 @@
+#!/bin/bash
+# Arch Linux RetroArch Console Setup (Intel GPU + Openbox Fallback)
+
+set -e
+
+echo "Updating system and installing required packages..."
+sudo pacman -Syu --noconfirm \
+    retroarch \
+    xorg-server xorg-xinit xorg-xrandr xorg-xsetroot xorg-xinput xorg-xprop xorg-xev xorg-xhost xterm \
+    mesa mesa-utils xf86-video-intel \
+    openbox tint2 \
+    onboard \
+    xboxdrv antimicrox \
+    networkmanager network-manager-applet \
+    bluez bluez-utils blueman \
+    ntfs-3g
+
+echo "Enabling NetworkManager and Bluetooth..."
+sudo systemctl enable NetworkManager bluetooth
+sudo systemctl start NetworkManager bluetooth
+
+echo "Creating RetroArch wrapper script..."
+cat << 'EOF' > ~/start_retroarch.sh
+#!/bin/bash
+sudo xboxdrv --daemon
+retroarch
+exec startx ~/start_wm.sh
+EOF
+chmod +x ~/start_retroarch.sh
+
+echo "Creating Openbox fallback script..."
+cat << 'EOF' > ~/start_wm.sh
 #!/bin/sh
-# install_all_emulators_manual.sh
-# Installs all major emulators and RetroArch with cores on NetBSD using pkgin
+tint2 &
+onboard &
+antimicrox --profile ~/.config/antimicrox/retro_fallback.profile &
+exec openbox-session
+EOF
+chmod +x ~/start_wm.sh
 
-echo "Updating pkgin package database..."
-sudo pkgin update
+echo "Setting up auto-login on TTY1..."
+sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+sudo bash -c 'cat << EOF > /etc/systemd/system/getty@tty1.service.d/override.conf
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin '"$USER"' --noclear %I \$TERM
+EOF'
+sudo systemctl daemon-reexec
 
-echo "Installing PC & DOS emulators..."
-sudo pkgin install qemu bochs dosbox 8086tiny tme applyppf
+echo "Adding RetroArch auto-start to ~/.bash_profile..."
+grep -qxF 'if [[ $(tty) == /dev/tty1 ]]; then exec ~/start_retroarch.sh; fi' ~/.bash_profile || \
+echo 'if [[ $(tty) == /dev/tty1 ]]; then exec ~/start_retroarch.sh; fi' >> ~/.bash_profile
 
-echo "Installing Console emulators..."
-sudo pkgin install bsnes snes9x fceux genesis-plus-gx mednafen ppsspp pcsx2 dolphin cygne-sdl basiliskII raine vecx
+echo "Creating system-wide RetroArch shortcut..."
+sudo bash -c 'cat << EOF > /usr/share/applications/retroarch.desktop
+[Desktop Entry]
+Name=RetroArch
+Comment=Launch RetroArch
+Exec='"$HOME"'/start_retroarch.sh
+Icon=retroarch
+Terminal=false
+Type=Application
+Categories=Game;Emulator;
+EOF'
+sudo chown root:root /usr/share/applications/retroarch.desktop
+sudo chmod 755 /usr/share/applications/retroarch.desktop
 
-echo "Installing Home computer emulators..."
-sudo pkgin install atari800 aranym arcem xbeeb b-em vice arnold
-
-echo "Installing Arcade & Retro front-end emulators..."
-sudo pkgin install advancemame blastem cannonball blinkensim raine emulationstation
-
-echo "Installing RetroArch and all available cores..."
-sudo pkgin install retroarch retroarch-cores/*
-
-echo "Upgrading all installed packages to latest versions..."
-sudo pkgin upgrade
-
-echo "All emulators, RetroArch, and RetroArch cores have been installed and updated!"
+echo "Setup complete! Reboot to start RetroArch automatically."

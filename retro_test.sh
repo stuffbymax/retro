@@ -1,80 +1,76 @@
 #!/bin/bash
-# retro-debian-console.sh
-# Debian Dual-Mode OS: RetroArch-first, DWM desktop default, optional XFCE4
-# Full system-wide gamepad support, antimicrox autostart in desktop only
+# setup_bootmenu.sh - Full automated setup for Debian boot menu with RetroArch & IceWM
 
 set -e
 
-RETRO_USER="zdislav"
+USER_NAME=$(whoami)
+BOOTMENU_PATH="/usr/local/bin/bootmenu.sh"
+ICEWM_MENU="$HOME/.icewm/menu"
 
-echo "[*] Updating system..."
-apt update && apt upgrade -y
+echo "=== Installing required packages ==="
+sudo apt update
+sudo apt install -y retroarch icewm xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo
 
-echo "[*] Installing essentials + lightweight desktop + RetroArch + gamepad tools..."
-apt install -y xorg xinit mesa-utils dwm suckless-tools stterm dmenu firmware-linux-free firmware-linux-nonfree git curl wget unzip retroarch libretro-* retroarch-assets joystick antimicrox libsdl2-2.0-0
+echo "=== Creating boot menu script ==="
+sudo tee $BOOTMENU_PATH > /dev/null << 'EOF'
+#!/bin/bash
+# bootmenu.sh - Text-based boot menu on tty1
 
-# Optional XFCE4 installation
-read -p "Do you want to install XFCE4 as optional desktop? [y/N]: " INSTALL_XFCE
-if [[ "$INSTALL_XFCE" =~ ^[Yy]$ ]]; then
-    echo "[*] Installing XFCE4..."
-    apt install -y xfce4 lightdm
-fi
+while true; do
+    CHOICE=$(dialog --clear --backtitle "Debian Boot Menu" \
+        --title "Boot Menu" \
+        --menu "Choose an option:" 15 50 6 \
+        1 "Launch RetroArch (fullscreen)" \
+        2 "Launch IceWM Desktop" \
+        3 "Reboot" \
+        4 "Shutdown" \
+        3>&1 1>&2 2>&3)
 
-echo "[*] Adding $RETRO_USER user..."
-if ! id "$RETRO_USER" &>/dev/null; then
-    adduser --disabled-password --gecos "" "$RETRO_USER"
-fi
-
-echo "[*] Enabling autologin for $RETRO_USER..."
-mkdir -p /etc/systemd/system/getty@tty1.service.d
-cat >/etc/systemd/system/getty@tty1.service.d/override.conf <<EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin $RETRO_USER --noclear %I \$TERM
+    clear
+    case $CHOICE in
+        1)
+            retroarch -f
+            ;;
+        2)
+            startx
+            ;;
+        3)
+            sudo reboot
+            ;;
+        4)
+            sudo shutdown now
+            ;;
+        *)
+            echo "Invalid option"
+            ;;
+    esac
+done
 EOF
 
-echo "[*] Configuring RetroArch first boot + desktop fallback..."
-cat > /home/$RETRO_USER/.xinitrc <<'EOP'
-#!/bin/bash
-# Launch RetroArch first
-retroarch
+sudo chmod +x $BOOTMENU_PATH
 
-# When RetroArch exits, launch desktop
-if command -v startxfce4 >/dev/null 2>&1; then
-    # XFCE installed
-    antimicrox --hidden &
-    exec startxfce4
-else
-    # Default lightweight desktop DWM
-    antimicrox --hidden &
-    exec dwm
-fi
-EOP
+echo "=== Configuring auto-login on tty1 ==="
+sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
+sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf > /dev/null << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $USER_NAME --noclear %I \$TERM
+EOF
 
-chown $RETRO_USER:$RETRO_USER /home/$RETRO_USER/.xinitrc
-chmod +x /home/$RETRO_USER/.xinitrc
+sudo systemctl daemon-reexec
 
-echo "[*] Configure autostart of X for $RETRO_USER..."
-cat > /home/$RETRO_USER/.bash_profile <<'EOP'
-if [[ -z $DISPLAY ]] && [[ $(tty) == /dev/tty1 ]]; then
-    exec startx
-fi
-EOP
+echo "=== Configuring .bash_profile to launch boot menu ==="
+grep -qxF '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' ~/.bash_profile || \
+    echo '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' >> ~/.bash_profile
 
-chown $RETRO_USER:$RETRO_USER /home/$RETRO_USER/.bash_profile
-chmod +x /home/$RETRO_USER/.bash_profile
+echo "=== Configuring IceWM menu ==="
+mkdir -p "$(dirname "$ICEWM_MENU")"
+cat > "$ICEWM_MENU" << EOF
+prog "RetroArch" retroarch -f
+sep
+prog "Reboot" sudo reboot
+prog "Shutdown" sudo shutdown now
+EOF
 
-echo "[*] Adding $RETRO_USER to input and plugdev for controller access..."
-usermod -aG input,plugdev $RETRO_USER
-
-echo "[*] Installing SDL2 controller database for better mappings..."
-mkdir -p /home/$RETRO_USER/.config
-wget -q https://raw.githubusercontent.com/gabomdq/SDL_GameControllerDB/master/gamecontrollerdb.txt \
-    -O /home/$RETRO_USER/.config/gamecontrollerdb.txt
-chown -R $RETRO_USER:$RETRO_USER /home/$RETRO_USER/.config
-echo "SDL_GAMECONTROLLERCONFIG=/home/$RETRO_USER/.config/gamecontrollerdb.txt" >> /etc/environment
-
-echo "[*] Setup complete!"
-echo "Reboot now. System boots into RetroArch automatically."
-echo "Exit RetroArch to switch to desktop mode (DWM or XFCE if installed)."
-echo "Controllers are enabled system-wide, with antimicrox autostart in desktop modes."
+echo "=== Setup complete! ==="
+echo "Reboot your system to see the boot menu in action on tty1."

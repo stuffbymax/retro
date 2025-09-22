@@ -4,15 +4,15 @@
 set -e
 
 echo "Updating system and installing required packages..."
-sudo pacman -Syu --noconfirm \
-    retroarch \
-    xorg-server xorg-xinit xorg-xrandr xorg-xsetroot xorg-xinput xorg-xprop xorg-xev xorg-xhost xterm \
-    mesa mesa-utils xf86-video-intel \
-    openbox tint2 \
-    onboard \
-    xboxdrv antimicrox \
-    networkmanager network-manager-applet \
-    bluez bluez-utils blueman \
+sudo pacman -Syu --noconfirm
+    retroarch
+    xorg-server xorg-xinit xorg-xrandr xorg-xsetroot xorg-xinput xorg-xprop xorg-xev xorg-xhost xterm
+    mesa mesa-utils xf86-video-intel
+    openbox tint2
+    onboard
+    xboxdrv antimicrox
+    networkmanager network-manager-applet
+    bluez bluez-utils blueman
     ntfs-3g
 
 echo "Enabling NetworkManager and Bluetooth..."

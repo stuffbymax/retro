@@ -4,9 +4,7 @@
 set -e
 
 echo "Updating system and installing required packages..."
-sudo pacman -Syu --noconfirm
-    retroarch
-    xorg-server xorg-xinit xorg-xrandr xorg-xsetroot xorg-xinput xorg-xprop xorg-xev xorg-xhost xterm
+sudo pacman -Syu retroarch xorg-server xorg-xinit xorg-xrandr xorg-xsetroot xorg-xinput xorg-xprop xorg-xev xorg-xhost xterm
     mesa mesa-utils xf86-video-intel
     openbox tint2
     onboard

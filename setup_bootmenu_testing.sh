@@ -11,8 +11,7 @@ ANTIMICROX_CONFIG="$HOME/.config/antimicrox/gamepad.profile"   # <-- adjust prof
 
 echo "=== Installing required packages ==="
 sudo apt update
-sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core \
-    xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox
+sudo apt install -y retroarch icewm xfce4 xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog joystick antimicrox sudo
 
 echo "=== Creating boot menu script ==="
 sudo tee $BOOTMENU_PATH > /dev/null << EOF

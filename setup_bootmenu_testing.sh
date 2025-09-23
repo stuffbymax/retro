@@ -136,18 +136,20 @@ EOF
 chmod +x ~/.icewm/startup
 
 echo "=== Setting up RetroArch cores ==="
-mkdir -p "$RETROARCH_CORES_DIR"
-cd "$RETROARCH_CORES_DIR"
-CORE_URL="http://buildbot.libretro.com/nightly/linux/x86_64/latest/"
-CORE_ZIP=\$(wget -qO- "\$CORE_URL" | grep -o 'href="[^"]*zip"' | head -n1 | cut -d'"' -f2)
-if [ -n "\$CORE_ZIP" ]; then
-    echo "Downloading cores from: \$CORE_URL\$CORE_ZIP"
-    wget -q "\$CORE_URL\$CORE_ZIP" -O cores.zip
-    unzip -o cores.zip
-    rm cores.zip
-else
-    echo "Warning: Could not fetch RetroArch cores package."
-fi
+
+# Create cores directory
+mkdir -p ~/.config/retroarch/cores
+cd ~/.config/retroarch/cores
+
+# Download latest nightly cores zip
+wget -q http://buildbot.libretro.com/nightly/linux/x86_64/latest/cores.zip -O cores.zip
+
+# Unzip cores into ~/.config/retroarch/cores
+unzip -o cores.zip -d cores
+
+# Clean up zip
+rm cores.zip
+
 
 echo "=== Setup complete! ==="
 echo "Reboot your system to see the boot menu on tty1."

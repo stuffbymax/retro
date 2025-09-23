@@ -6,22 +6,24 @@ BOOTMENU="/usr/local/bin/bootmenu.sh"
 PS3_PYTHON="/usr/local/bin/ps3_to_keys.py"
 ICEWM_MENU="$HOME/.icewm/menu"
 AUTOSTART_DIR="$HOME/.config/autostart"
-ANTIMICROX_PROFILE="$HOME/.config/antimicrox/gamepad.profile"
+ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
 RETROARCH_CONFIG="$HOME/.config/retroarch"
 RETROARCH_CORES_DIR="$RETROARCH_CONFIG/cores"
 
-echo "=== Clean old joystick packages ==="
-sudo apt remove --purge -y joy2key xboxdrv joystick || true
+#echo "=== Clean old joystick packages ==="
+#sudo apt remove --purge -y joy2key xboxdrv joystick || true
 
-echo "=== Install required packages ==="
-sudo apt update
-sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit \
-xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa \
-dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl
+#echo "=== Install required packages ==="
+#sudo apt update
+#sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit \
+#xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa \
+#dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl
 
 # Load uinput and add user to input group
-sudo modprobe uinput
-sudo usermod -aG input $USER_NAME
+#sudo modprobe uinput
+#sudo usermod -aG input $USER_NAME
+
+sudo chmod 777 /usr/local/bin/ps3_to_keys.py
 
 # -------------------------------
 # Step 1: Python PS3 TTY mapper
@@ -70,6 +72,7 @@ sudo chmod +x $PS3_PYTHON
 # -------------------------------
 sudo tee $BOOTMENU > /dev/null << EOF
 #!/bin/bash
+$PS3_PYTHON &
 while true; do
 CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
 --title "Boot Menu" \
@@ -150,17 +153,10 @@ mkdir -p "$RETROARCH_CORES_DIR"
 cd "$RETROARCH_CORES_DIR" || exit 1
 
 # Fetch list of .zip files
-CORE_LIST=$(curl -s http://buildbot.libretro.com/nightly/linux/x86_64/latest/ | grep -oP 'href="\K.*?\.zip')
+wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
+find . -name "*.zip" -exec unzip -o {} \;
+find . -name "*.zip" -delete
 
-for core in $CORE_LIST; do
-    curl -O "http://buildbot.libretro.com/nightly/linux/x86_64/latest/$core"
-done
-
-# Unzip all cores
-for zipfile in *.zip; do
-    unzip -o "$zipfile"
-    rm "$zipfile"
-done
 
 echo "All RetroArch cores downloaded and extracted."
 

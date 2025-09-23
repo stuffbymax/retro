@@ -22,62 +22,81 @@ EOF
 echo "=== Creating PS3-style boot menu script ==="
 sudo tee $BOOTMENU_PATH > /dev/null << EOF
 #!/bin/bash
-# bootmenu.sh - PS3-style ASCII boot menu on tty1 with gamepad support
+# bootmenu_xmb.sh - Horizontal PS3-style ASCII boot menu with gamepad support
 
-USER_NAME=$USER_NAME
+USER_NAME=$(whoami)
 
 # Start gamepad mapping
 if command -v antimicrox >/dev/null 2>&1; then
-    antimicrox --profile $ANTIMICRO_PROFILE &
-    ANTIMICRO_PID=\$!
+    antimicrox --profile /home/$USER_NAME/bootmenu_gamepad_profile.amgp &
+    ANTIMICRO_PID=$!
 fi
 
 OPTIONS=("RetroArch" "IceWM" "XFCE4" "Reboot" "Shutdown")
+SELECTED=0
 
-while true; do
+draw_menu() {
     clear
     echo "==============================================="
-    echo "        ▸  PS3-Style Boot Menu  ◂"
+    echo "           ▸ PS3-style Boot Menu ◂"
     echo "==============================================="
     echo
-    for i in "\${!OPTIONS[@]}"; do
-        printf " %d) %s\n" \$((i+1)) "\${OPTIONS[\$i]}"
+    for i in "${!OPTIONS[@]}"; do
+        if [ "$i" -eq "$SELECTED" ]; then
+            # Highlight selected option
+            echo -n "[* ${OPTIONS[$i]} *]  "
+        else
+            echo -n "[  ${OPTIONS[$i]}  ]  "
+        fi
     done
     echo
-    echo "Use arrow keys or gamepad to select an option"
-    echo -n "Enter choice [1-${#OPTIONS[@]}]: "
-    read -r CHOICE
+    echo
+    echo "Use LEFT/RIGHT arrows or gamepad to select, ENTER to confirm"
+}
 
-    case \$CHOICE in
-        1)
-            # Stop gamepad mapping for RetroArch
-            if [ ! -z "\$ANTIMICRO_PID" ]; then
-                kill \$ANTIMICRO_PID
-                wait \$ANTIMICRO_PID 2>/dev/null
-            fi
-            if [ -f /home/\$USER_NAME/.config/retroarch/retroarch.cfg ]; then
-                retroarch -f -c /home/\$USER_NAME/.config/retroarch/retroarch.cfg
-            else
-                retroarch -f
-            fi
-            ;;
-        2)
-            startx ~/.xinitrc_icewm
-            ;;
-        3)
-            startx ~/.xinitrc_xfce4
-            ;;
-        4)
-            sudo reboot
-            ;;
-        5)
-            sudo shutdown now
-            ;;
-        *)
-            echo "Invalid option"
-            sleep 1
-            ;;
-    esac
+while true; do
+    draw_menu
+
+    # Read single keypress
+    read -rsn1 key
+    if [ "$key" = $'\x1b' ]; then
+        read -rsn2 key  # read two more chars
+        if [ "$key" = "[C" ]; then
+            # Right arrow
+            ((SELECTED=(SELECTED+1)%${#OPTIONS[@]}))
+        elif [ "$key" = "[D" ]; then
+            # Left arrow
+            ((SELECTED=(SELECTED-1+${#OPTIONS[@]})%${#OPTIONS[@]}))
+        fi
+    elif [ "$key" = "" ]; then
+        # Enter pressed
+        case $SELECTED in
+            0)
+                # Stop AntimicroX for RetroArch
+                if [ ! -z "$ANTIMICRO_PID" ]; then
+                    kill $ANTIMICRO_PID
+                    wait $ANTIMICRO_PID 2>/dev/null
+                fi
+                if [ -f /home/$USER_NAME/.config/retroarch/retroarch.cfg ]; then
+                    retroarch -f -c /home/$USER_NAME/.config/retroarch/retroarch.cfg
+                else
+                    retroarch -f
+                fi
+                ;;
+            1)
+                startx ~/.xinitrc_icewm
+                ;;
+            2)
+                startx ~/.xinitrc_xfce4
+                ;;
+            3)
+                sudo reboot
+                ;;
+            4)
+                sudo shutdown now
+                ;;
+        esac
+    fi
 done
 EOF
 

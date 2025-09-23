@@ -1,6 +1,6 @@
 #!/bin/bash
 # setup_bootmenu.sh - Debian boot menu with RetroArch, IceWM, XFCE4,
-# AntimicroX in X, joystick mapping in console, and RetroArch cores.
+# AntimicroX in X, joystick mapping in TUI, and RetroArch cores.
 
 set -e
 
@@ -10,7 +10,8 @@ JOYMAP_SCRIPT="/usr/local/bin/start-joymap.sh"
 ICEWM_MENU="$HOME/.icewm/menu"
 AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_CONFIG="$HOME/.config/antimicrox/gamepad.profile"
-RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
+RETROARCH_CONFIG="$HOME/.config/retroarch"
+RETROARCH_CORES_DIR="$RETROARCH_CONFIG/cores"
 
 echo "=== Installing required packages ==="
 sudo apt update
@@ -18,22 +19,36 @@ sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core 
     xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox \
     wget unzip joystick
 
-echo "=== Creating joystick mapping script ==="
+# Add user to input group for joystick access
+sudo usermod -aG input $USER_NAME
+
+# -------------------------------
+# Step 1: Create joystick mapping script (auto-detect device)
+# -------------------------------
 sudo tee $JOYMAP_SCRIPT > /dev/null << 'EOF'
 #!/bin/bash
-# start-joymap.sh - PS3 controller mapping to keyboard keys
+# start-joymap.sh - Auto-detect first joystick and map buttons
 
-# Kill existing joy2key if running
+# Kill previous joy2key
 pkill -x joy2key 2>/dev/null || true
 
+# Detect first joystick device
+JS_DEV=$(ls /dev/input/js* 2>/dev/null | head -n1)
+if [ -z "$JS_DEV" ]; then
+    echo "No joystick found"
+    exit 1
+fi
+
 # Map PS3 joystick: D-pad = arrows, X=Enter, Circle=Escape, Select=Backspace, Start=Enter
-joy2key /dev/input/js0 \
+joy2key "$JS_DEV" \
     up down left right \
     enter escape backspace enter &
 EOF
 sudo chmod +x $JOYMAP_SCRIPT
 
-echo "=== Creating boot menu script ==="
+# -------------------------------
+# Step 2: Create boot menu script
+# -------------------------------
 sudo tee $BOOTMENU_PATH > /dev/null << EOF
 #!/bin/bash
 # bootmenu.sh - Text-based boot menu on tty1 with joystick support
@@ -92,21 +107,26 @@ done
 EOF
 sudo chmod +x $BOOTMENU_PATH
 
-echo "=== Configuring auto-login on tty1 ==="
+# -------------------------------
+# Step 3: Auto-login on tty1
+# -------------------------------
 sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
 sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf > /dev/null << EOF
 [Service]
 ExecStart=
 ExecStart=-/sbin/agetty --autologin $USER_NAME --noclear %I \$TERM
 EOF
-
 sudo systemctl daemon-reexec
 
-echo "=== Configuring .bash_profile to launch boot menu ==="
+# -------------------------------
+# Step 4: Launch boot menu automatically
+# -------------------------------
 grep -qxF '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' ~/.bash_profile || \
     echo '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' >> ~/.bash_profile
 
-echo "=== Configuring IceWM menu ==="
+# -------------------------------
+# Step 5: IceWM menu
+# -------------------------------
 mkdir -p "$(dirname "$ICEWM_MENU")"
 cat > "$ICEWM_MENU" << EOF
 prog "RetroArch" retroarch -f
@@ -115,7 +135,9 @@ prog "Reboot" sudo reboot
 prog "Shutdown" sudo shutdown now
 EOF
 
-echo "=== Configuring XFCE4 and IceWM autostart for AntimicroX ==="
+# -------------------------------
+# Step 6: AntimicroX autostart for XFCE4
+# -------------------------------
 mkdir -p "$AUTOSTART_DIR"
 cat > "$AUTOSTART_DIR/antimicrox.desktop" << EOF
 [Desktop Entry]
@@ -128,6 +150,9 @@ Name=AntimicroX
 Comment=Start AntimicroX with profile
 EOF
 
+# -------------------------------
+# Step 7: AntimicroX autostart for IceWM
+# -------------------------------
 mkdir -p ~/.icewm
 cat > ~/.icewm/startup << EOF
 #!/bin/bash
@@ -135,23 +160,24 @@ antimicrox --hidden --profile $ANTIMICROX_CONFIG &
 EOF
 chmod +x ~/.icewm/startup
 
-echo "=== Setting up RetroArch cores ==="
+# -------------------------------
+# Step 8: Download and setup RetroArch cores
+# -------------------------------
+mkdir -p "$RETROARCH_CORES_DIR"
+cd "$RETROARCH_CONFIG"
 
-# Create cores directory
-mkdir -p ~/.config/retroarch/cores
-cd ~/.config/retroarch/cores
-
-# Download latest nightly cores zip
-wget -q http://buildbot.libretro.com/nightly/linux/x86_64/latest/cores.zip -O cores.zip
-
-# Unzip cores into ~/.config/retroarch/cores
-unzip -o cores.zip -d cores
-
-# Clean up zip
-rm cores.zip
-
+echo "Downloading RetroArch cores..."
+if wget -q http://buildbot.libretro.com/nightly/linux/x86_64/latest/cores.zip -O cores.zip; then
+    unzip -o cores.zip -d cores
+    rm cores.zip
+    echo "RetroArch cores installed in $RETROARCH_CORES_DIR"
+else
+    echo "Warning: Could not download RetroArch cores"
+fi
 
 echo "=== Setup complete! ==="
 echo "Reboot your system to see the boot menu on tty1."
 echo "Use PS3 joystick to navigate the menu (D-pad + X=Enter, Circle=Escape)."
 echo "RetroArch runs without joy2key interference; mapping resumes after exit."
+echo "AntimicroX starts automatically in IceWM and XFCE4."
+echo "Make sure your user is in the 'input' group for joystick access."

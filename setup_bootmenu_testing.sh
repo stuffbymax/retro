@@ -1,102 +1,74 @@
 #!/bin/bash
-# setup_bootmenu.sh - PS3-style ASCII boot menu with gamepad, RetroArch, IceWM & XFCE4
+# setup_bootmenu.sh - Debian boot menu with RetroArch, IceWM, XFCE4, and AntimicroX control
 
 set -e
 
 USER_NAME=$(whoami)
 BOOTMENU_PATH="/usr/local/bin/bootmenu.sh"
 ICEWM_MENU="$HOME/.icewm/menu"
-ANTIMICRO_PROFILE="$HOME/bootmenu_gamepad_profile.amgp"
+AUTOSTART_DIR="$HOME/.config/autostart"
+ANTIMICROX_CONFIG="$HOME/.config/antimicrox/gamepad.profile"   # <-- adjust profile filename if needed
 
 echo "=== Installing required packages ==="
 sudo apt update
-sudo apt install -y retroarch icewm xfce4 xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog joystick antimicrox sudo
+sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core \
+    xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox
 
-echo "=== Creating gamepad profile ==="
-# Simple placeholder profile for AntimicroX
-cat > "$ANTIMICRO_PROFILE" << EOF
-# Map D-pad Up/Down/Left/Right to arrows, A/Cross to Enter
-# Save your custom mapping in AntimicroX GUI and save it here
-EOF
-
-echo "=== Creating PS3-style boot menu script ==="
+echo "=== Creating boot menu script ==="
 sudo tee $BOOTMENU_PATH > /dev/null << EOF
 #!/bin/bash
-# bootmenu_xmb.sh - Horizontal PS3-style ASCII boot menu with gamepad support
+# bootmenu.sh - Text-based boot menu on tty1 with AntimicroX management
 
-USER_NAME=$(whoami)
-
-# Start gamepad mapping
-if command -v antimicrox >/dev/null 2>&1; then
-    antimicrox --profile /home/$USER_NAME/bootmenu_gamepad_profile.amgp &
-    ANTIMICRO_PID=$!
-fi
-
-OPTIONS=("RetroArch" "IceWM" "XFCE4" "Reboot" "Shutdown")
-SELECTED=0
-
-draw_menu() {
-    clear
-    echo "==============================================="
-    echo "           ▸ PS3-style Boot Menu ◂"
-    echo "==============================================="
-    echo
-    for i in "${!OPTIONS[@]}"; do
-        if [ "$i" -eq "$SELECTED" ]; then
-            # Highlight selected option
-            echo -n "[* ${OPTIONS[$i]} *]  "
-        else
-            echo -n "[  ${OPTIONS[$i]}  ]  "
-        fi
-    done
-    echo
-    echo
-    echo "Use LEFT/RIGHT arrows or gamepad to select, ENTER to confirm"
+start_antimicrox() {
+    if ! pgrep -x antimicrox >/dev/null; then
+        antimicrox --hidden --profile $ANTIMICROX_CONFIG &
+        sleep 2
+    fi
 }
 
-while true; do
-    draw_menu
+stop_antimicrox() {
+    pkill -x antimicrox 2>/dev/null || true
+}
 
-    # Read single keypress
-    read -rsn1 key
-    if [ "$key" = $'\x1b' ]; then
-        read -rsn2 key  # read two more chars
-        if [ "$key" = "[C" ]; then
-            # Right arrow
-            ((SELECTED=(SELECTED+1)%${#OPTIONS[@]}))
-        elif [ "$key" = "[D" ]; then
-            # Left arrow
-            ((SELECTED=(SELECTED-1+${#OPTIONS[@]})%${#OPTIONS[@]}))
-        fi
-    elif [ "$key" = "" ]; then
-        # Enter pressed
-        case $SELECTED in
-            0)
-                # Stop AntimicroX for RetroArch
-                if [ ! -z "$ANTIMICRO_PID" ]; then
-                    kill $ANTIMICRO_PID
-                    wait $ANTIMICRO_PID 2>/dev/null
-                fi
-                if [ -f /home/$USER_NAME/.config/retroarch/retroarch.cfg ]; then
-                    retroarch -f -c /home/$USER_NAME/.config/retroarch/retroarch.cfg
-                else
-                    retroarch -f
-                fi
-                ;;
-            1)
-                startx ~/.xinitrc_icewm
-                ;;
-            2)
-                startx ~/.xinitrc_xfce4
-                ;;
-            3)
-                sudo reboot
-                ;;
-            4)
-                sudo shutdown now
-                ;;
-        esac
-    fi
+# Start antimicrox when entering menu
+start_antimicrox
+
+while true; do
+    CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
+        --title "Boot Menu" \
+        --menu "Choose an option:" 15 50 6 \
+        1 "Launch RetroArch (fullscreen)" \
+        2 "Launch IceWM Desktop" \
+        3 "Launch XFCE4 Desktop" \
+        4 "Reboot" \
+        5 "Shutdown" \
+        3>&1 1>&2 2>&3)
+
+    clear
+    case \$CHOICE in
+        1)
+            stop_antimicrox
+            retroarch -f
+            start_antimicrox
+            ;;
+        2)
+            echo "exec icewm-session" > ~/.xinitrc
+            startx
+            ;;
+        3)
+            echo "exec startxfce4" > ~/.xinitrc
+            startx
+            ;;
+        4)
+            sudo reboot
+            ;;
+        5)
+            sudo shutdown now
+            ;;
+        *)
+            echo "Invalid option"
+            ;;
+    esac
 done
 EOF
 
@@ -125,26 +97,20 @@ prog "Reboot" sudo reboot
 prog "Shutdown" sudo shutdown now
 EOF
 
-echo "=== Creating .xinitrc files for desktops ==="
-cat > ~/.xinitrc_icewm << EOF
-#!/bin/bash
-exec icewm-session
+echo "=== Configuring XFCE4 and IceWM autostart for AntimicroX ==="
+mkdir -p "$AUTOSTART_DIR"
+cat > "$AUTOSTART_DIR/antimicrox.desktop" << EOF
+[Desktop Entry]
+Type=Application
+Exec=antimicrox --hidden --profile $ANTIMICROX_CONFIG
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=AntimicroX
+Comment=Start AntimicroX with profile
 EOF
-chmod +x ~/.xinitrc_icewm
-
-cat > ~/.xinitrc_xfce4 << EOF
-#!/bin/bash
-exec startxfce4
-EOF
-chmod +x ~/.xinitrc_xfce4
-
-echo "=== Disabling LightDM if XFCE4 is installed ==="
-if command -v xfce4-session >/dev/null 2>&1; then
-    echo "XFCE4 detected. Disabling LightDM..."
-    sudo systemctl disable lightdm
-    sudo systemctl stop lightdm
-fi
 
 echo "=== Setup complete! ==="
-echo "Reboot your system to see the PS3-style boot menu on tty1."
-echo "Use a gamepad to navigate the menu; RetroArch will take full controller control."
+echo "Reboot your system to see the boot menu on tty1."
+echo "AntimicroX starts automatically in the menu and desktop sessions."
+echo "When launching RetroArch, AntimicroX is stopped; it restarts after RetroArch exits."

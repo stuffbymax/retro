@@ -1,5 +1,6 @@
 #!/bin/bash
-# Clean previous failed setup and install working boot menu with PS3 controller in TTY
+# Clean TTY boot menu setup: Python PS3 mapper + AntimicroX in X + RetroArch
+
 set -e
 
 USER_NAME=$(whoami)
@@ -9,68 +10,92 @@ AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_CONFIG="$HOME/.config/antimicrox/gamepad.profile"
 RETROARCH_CONFIG="$HOME/.config/retroarch"
 RETROARCH_CORES_DIR="$RETROARCH_CONFIG/cores"
+PS3_PYTHON="/usr/local/bin/ps3_to_keys.py"
 
-echo "=== Removing non-working joy2key ==="
-# Remove packages
-sudo apt remove --purge -y joy2key joystick
-
-# Remove leftover scripts if they exist
+echo "=== Remove old non-working joystick packages ==="
+sudo apt remove --purge -y joy2key joystick xboxdrv || true
 sudo rm -f /usr/local/bin/start-joymap.sh
 
-# Optional: remove any custom joystick config files
-rm -f ~/.start-joymap.sh
-
-
-echo "=== Installing required packages ==="
+echo "=== Install required packages ==="
 sudo apt update
 sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core \
-    xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox \
-    wget unzip xboxdrv
+    xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox wget unzip \
+    python3-evdev python3-uinput
+
+# Load uinput module for keyboard emulation
+sudo modprobe uinput
+
+# Add user to input group for joystick access
+sudo usermod -aG input $USER_NAME
 
 # -------------------------------
-# Step 1: Create boot menu script
+# Step 1: Python PS3 TTY mapper
+# -------------------------------
+sudo tee $PS3_PYTHON > /dev/null << 'EOF'
+#!/usr/bin/env python3
+import evdev, uinput, glob, sys
+
+devices = [evdev.InputDevice(fn) for fn in glob.glob("/dev/input/js*")]
+if not devices:
+    print("No joystick found")
+    sys.exit(1)
+
+dev = devices[0]
+dev.grab()
+
+events = (uinput.KEY_ENTER, uinput.KEY_ESC, uinput.KEY_SPACE, uinput.KEY_BACKSPACE,
+          uinput.KEY_UP, uinput.KEY_DOWN, uinput.KEY_LEFT, uinput.KEY_RIGHT)
+ui = uinput.Device(events)
+
+BTN_MAP = {304: uinput.KEY_ENTER, 305: uinput.KEY_ESC, 307: uinput.KEY_BACKSPACE, 308: uinput.KEY_SPACE}
+AXIS_UPDOWN = 7
+AXIS_LEFTRIGHT = 6
+
+for event in dev.read_loop():
+    if event.type == evdev.ecodes.EV_KEY:
+        key = BTN_MAP.get(event.code)
+        if key:
+            ui.emit(key, event.value)
+    elif event.type == evdev.ecodes.EV_ABS:
+        if event.code == AXIS_UPDOWN:
+            ui.emit(uinput.KEY_UP, 1 if event.value==-1 else 0)
+            ui.emit(uinput.KEY_DOWN, 1 if event.value==1 else 0)
+        elif event.code == AXIS_LEFTRIGHT:
+            ui.emit(uinput.KEY_LEFT, 1 if event.value==-1 else 0)
+            ui.emit(uinput.KEY_RIGHT, 1 if event.value==1 else 0)
+EOF
+
+sudo chmod +x $PS3_PYTHON
+
+# -------------------------------
+# Step 2: Boot menu script
 # -------------------------------
 sudo tee $BOOTMENU_PATH > /dev/null << EOF
 #!/bin/bash
-# bootmenu.sh - Text-based boot menu on tty1 with xboxdrv support
-
 while true; do
-    CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
-        --title "Boot Menu" \
-        --menu "Choose an option:" 15 50 6 \
-        1 "Launch RetroArch (fullscreen)" \
-        2 "Launch IceWM Desktop" \
-        3 "Launch XFCE4 Desktop" \
-        4 "Reboot" \
-        5 "Shutdown" \
-        3>&1 1>&2 2>&3)
+CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
+--title "Boot Menu" \
+--menu "Choose an option:" 15 50 6 \
+1 "Launch RetroArch (fullscreen)" \
+2 "Launch IceWM Desktop" \
+3 "Launch XFCE4 Desktop" \
+4 "Reboot" \
+5 "Shutdown" 3>&1 1>&2 2>&3)
 
-    clear
-    case \$CHOICE in
-        1)
-            retroarch -f
-            ;;
-        2)
-            echo "exec icewm-session" > ~/.xinitrc
-            startx
-            ;;
-        3)
-            echo "exec startxfce4" > ~/.xinitrc
-            startx
-            ;;
-        4)
-            sudo reboot
-            ;;
-        5)
-            sudo shutdown now
-            ;;
-    esac
+clear
+case \$CHOICE in
+1) retroarch -f ;;
+2) echo "exec icewm-session" > ~/.xinitrc; startx ;;
+3) echo "exec startxfce4" > ~/.xinitrc; startx ;;
+4) sudo reboot ;;
+5) sudo shutdown now ;;
+esac
 done
 EOF
 sudo chmod +x $BOOTMENU_PATH
 
 # -------------------------------
-# Step 2: Auto-login on tty1
+# Step 3: Auto-login on tty1
 # -------------------------------
 sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
 sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf > /dev/null << EOF
@@ -81,13 +106,13 @@ EOF
 sudo systemctl daemon-reexec
 
 # -------------------------------
-# Step 3: Launch boot menu automatically
+# Step 4: Launch boot menu automatically
 # -------------------------------
 grep -qxF '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' ~/.bash_profile || \
-    echo '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' >> ~/.bash_profile
+echo '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' >> ~/.bash_profile
 
 # -------------------------------
-# Step 4: IceWM menu
+# Step 5: IceWM menu
 # -------------------------------
 mkdir -p "$(dirname "$ICEWM_MENU")"
 cat > "$ICEWM_MENU" << EOF
@@ -98,7 +123,7 @@ prog "Shutdown" sudo shutdown now
 EOF
 
 # -------------------------------
-# Step 5: AntimicroX autostart for XFCE4
+# Step 6: AntimicroX autostart for XFCE4
 # -------------------------------
 mkdir -p "$AUTOSTART_DIR"
 cat > "$AUTOSTART_DIR/antimicrox.desktop" << EOF
@@ -113,7 +138,7 @@ Comment=Start AntimicroX with profile
 EOF
 
 # -------------------------------
-# Step 6: AntimicroX autostart for IceWM
+# Step 7: AntimicroX autostart for IceWM
 # -------------------------------
 mkdir -p ~/.icewm
 cat > ~/.icewm/startup << EOF
@@ -123,33 +148,25 @@ EOF
 chmod +x ~/.icewm/startup
 
 # -------------------------------
-# Step 7: Download and setup RetroArch cores
+# Step 8: RetroArch cores
 # -------------------------------
 mkdir -p "$RETROARCH_CORES_DIR"
 cd "$RETROARCH_CONFIG"
-
-echo "Downloading RetroArch cores..."
 if wget -q http://buildbot.libretro.com/nightly/linux/x86_64/latest/cores.zip -O cores.zip; then
     unzip -o cores.zip -d cores
     rm cores.zip
-    echo "RetroArch cores installed in $RETROARCH_CORES_DIR"
-else
-    echo "Warning: Could not download RetroArch cores"
 fi
 
 # -------------------------------
-# Step 8: Setup xboxdrv for TTY joystick mapping
+# Step 9: Python PS3 mapper systemd service
 # -------------------------------
-echo "=== Creating xboxdrv systemd service ==="
-sudo tee /etc/systemd/system/xboxdrv.service > /dev/null << EOF
+sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
 [Unit]
-Description=PS3 controller mapping for TTY
+Description=PS3 Controller Keyboard Mapper
 After=dev-input-joystick.device
 
 [Service]
-ExecStart=/usr/bin/xboxdrv --evdev /dev/input/js0 --evdev-keymap \
-    BTN_A=KEY_ENTER,BTN_B=KEY_ESC,BTN_X=KEY_SPACE,BTN_Y=KEY_BACKSPACE \
-    --silent
+ExecStart=$PS3_PYTHON
 Restart=always
 User=root
 
@@ -158,10 +175,9 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl enable xboxdrv
-sudo systemctl start xboxdrv
+sudo systemctl enable ps3keys
+sudo systemctl start ps3keys
 
 echo "=== Setup complete! ==="
-echo "Reboot your system to see the boot menu on tty1."
-echo "PS3 controller should now work in the TUI menu via xboxdrv."
-echo "AntimicroX starts automatically in IceWM and XFCE4."
+echo "Reboot to test TTY boot menu with PS3 controller."
+echo "AntimicroX will start in IceWM and XFCE4."

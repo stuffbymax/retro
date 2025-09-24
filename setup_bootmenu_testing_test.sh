@@ -8,21 +8,22 @@ ICEWM_MENU="$HOME/.icewm/menu"
 AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
 RETROARCH_CONFIG="$HOME/.config/retroarch"
-RETROARCH_CORES_DIR="$RETROARCH_CONFIG/cores"
+RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
 
-# -------------------------------
-# Step 0: Prepare environment
-# -------------------------------
-sudo apt update
-sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit \
-xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa \
-dialog sudo antimicrox unzip python3-evdev python3-uinput wget
+#echo "=== Clean old joystick packages ==="
+#sudo apt remove --purge -y joy2key xboxdrv joystick || true
 
-sudo modprobe uinput
-sudo usermod -aG input $USER_NAME
+#echo "=== Install required packages ==="
+#sudo apt update
+#sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit \
+#xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa \
+#dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl
 
-mkdir -p "$RETROARCH_CORES_DIR"
-mkdir -p "$AUTOSTART_DIR"
+# Load uinput and add user to input group
+#sudo modprobe uinput
+#sudo usermod -aG input $USER_NAME
+
+sudo chmod 777 /usr/local/bin/ps3_to_keys.py
 
 # -------------------------------
 # Step 1: Python PS3 TTY mapper
@@ -47,14 +48,14 @@ events = (uinput.KEY_ENTER, uinput.KEY_ESC, uinput.KEY_SPACE, uinput.KEY_BACKSPA
 ui = uinput.Device(events)
 
 BTN_MAP = {
-    304: uinput.KEY_ENTER,       # X
-    305: uinput.KEY_ESC,         # Circle
-    307: uinput.KEY_BACKSPACE,   # Square
-    308: uinput.KEY_SPACE,       # Triangle
-    544: uinput.KEY_UP,          # D-pad Up
-    545: uinput.KEY_DOWN,        # D-pad Down
-    546: uinput.KEY_LEFT,        # D-pad Left
-    547: uinput.KEY_RIGHT        # D-pad Right
+    304: uinput.KEY_ENTER,  # X
+    305: uinput.KEY_ESC,    # Circle
+    307: uinput.KEY_BACKSPACE, # Square
+    308: uinput.KEY_SPACE,      # Triangle
+    544: uinput.KEY_UP,         # D-pad Up
+    545: uinput.KEY_DOWN,       # D-pad Down
+    546: uinput.KEY_LEFT,       # D-pad Left
+    547: uinput.KEY_RIGHT       # D-pad Right
 }
 
 device.grab()
@@ -100,6 +101,8 @@ case \$CHOICE in
     # Start AntimicroX in IceWM
     antimicrox --hidden --profile $ANTIMICROX_PROFILE &
     startx
+    $PS3_PYTHON &
+    PS3_PID=\$!
     ;;
 3)
     kill \$PS3_PID 2>/dev/null || true
@@ -107,6 +110,8 @@ case \$CHOICE in
     # Start AntimicroX in XFCE
     antimicrox --hidden --profile $ANTIMICROX_PROFILE &
     startx
+    $PS3_PYTHON &
+    PS3_PID=\$!
     ;;
 4)
     kill \$PS3_PID 2>/dev/null || true
@@ -132,7 +137,7 @@ ExecStart=-/sbin/agetty --autologin $USER_NAME --noclear %I \$TERM
 EOF
 sudo systemctl daemon-reexec
 
-# Auto-launch boot menu on tty1
+# Launch boot menu automatically on tty1
 grep -qxF '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' ~/.bash_profile || \
 echo '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' >> ~/.bash_profile
 
@@ -148,45 +153,63 @@ prog "Shutdown" sudo shutdown now
 EOF
 
 # -------------------------------
-# Step 5: AntimicroX autostart for XFCE
+# Step 5: AntimicroX autostart for XFCE4
 # -------------------------------
+mkdir -p "$AUTOSTART_DIR"
 cat > "$AUTOSTART_DIR/antimicrox.desktop" << EOF
 [Desktop Entry]
 Type=Application
-Exec=antimicrox --hidden --profile $ANTIMICROX_PROFILE
+Exec=antimicrox --hidden --profile /home/zdislav/.config/antimicrox/bootmenu_gamepad_profile.amgp
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
 Name=AntimicroX
 Comment=Start AntimicroX with profile
+
 EOF
 
 # -------------------------------
-# Step 6: Download RetroArch cores
+# Step 6: AntimicroX autostart for IceWM
 # -------------------------------
-cd "$RETROARCH_CORES_DIR"
-wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
-find . -name "*.zip" -exec unzip -o {} \;
-find . -name "*.zip" -delete
-
-# -------------------------------
-# Step 7: PS3 mapper systemd service (optional)
-# -------------------------------
-sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
-[Unit]
-Description=PS3 Controller Keyboard Mapper
-After=dev-input-joystick.device
-
-[Service]
-ExecStart=$PS3_PYTHON
-Restart=always
-User=root
-
-[Install]
-WantedBy=multi-user.target
+mkdir -p ~/.icewm
+cat > ~/.icewm/startup << EOF
+#!/bin/bash
+antimicrox --hidden --profile $ANTIMICROX_PROFILE &
 EOF
-sudo systemctl daemon-reload
-sudo systemctl enable ps3keys
-sudo systemctl start ps3keys
+chmod +x ~/.icewm/startup
+
+# -------------------------------
+# Step 7: Download RetroArch cores (all .zip files)
+# -------------------------------
+#cd ".config/retroarch/cores"
+
+# Fetch list of .zip files
+#wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
+#find . -name "*.zip" -exec unzip -o {} \;
+#find . -name "*.zip" -delete
+
+
+echo "All RetroArch cores downloaded and extracted."
+
+# -------------------------------
+# Step 8: Python PS3 mapper service
+# -------------------------------
+#sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
+#[Unit]
+#Description=PS3 Controller Keyboard Mapper
+#After=dev-input-joystick.device
+#
+#[Service]
+#ExecStart=$PS3_PYTHON
+#Restart=always
+#User=root
+#
+#[Install]
+#WantedBy=multi-user.target
+#EOF
+#
+#sudo systemctl daemon-reload
+#sudo systemctl enable ps3keys
+#sudo systemctl start ps3keys
 
 echo "=== Setup complete! Reboot to test ==="

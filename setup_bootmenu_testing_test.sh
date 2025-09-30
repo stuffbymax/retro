@@ -8,16 +8,14 @@ ICEWM_MENU="$HOME/.icewm/menu"
 AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
 RETROARCH_CONFIG="$HOME/.config/retroarch"
-RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
+#RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
 
 #echo "=== Clean old joystick packages ==="
 #sudo apt remove --purge -y joy2key xboxdrv joystick || true
 
 #echo "=== Install required packages ==="
-#sudo apt update
-#sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit \
-#xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa \
-#dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl
+sudo apt update
+sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl
 
 # Load uinput and add user to input group
 #sudo modprobe uinput
@@ -79,12 +77,14 @@ PS3_PID=\$!
 while true; do
 CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
 --title "Boot Menu" \
---menu "Choose an option:" 15 50 6 \
+--menu "Choose an option:" 15 50 7 \
 1 "Launch RetroArch (fullscreen)" \
 2 "Launch IceWM Desktop" \
 3 "Launch XFCE4 Desktop" \
-4 "Reboot" \
-5 "Shutdown" 3>&1 1>&2 2>&3)
+4 "Launch TWM Desktop" \
+5 "Reboot" \
+6 "Shutdown" 3>&1 1>&2 2>&3)
+
 
 clear
 
@@ -114,13 +114,23 @@ case \$CHOICE in
     PS3_PID=\$!
     ;;
 4)
-    kill \$PS3_PID 2>/dev/null || true
-    sudo reboot
+    kill $PS3_PID 2>/dev/null || true
+    echo "exec twm" > ~/.xinitrc
+    # Start AntimicroX in TWM (optional)
+    antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+    startx
+    $PS3_PYTHON &
+    PS3_PID=$!
     ;;
 5)
-    kill \$PS3_PID 2>/dev/null || true
+    kill $PS3_PID 2>/dev/null || true
+    sudo reboot
+    ;;
+6)
+    kill $PS3_PID 2>/dev/null || true
     sudo shutdown now
     ;;
+
 esac
 done
 EOF

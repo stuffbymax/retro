@@ -96,7 +96,7 @@ case \$CHOICE in
     kill \$PS3_PID 2>/dev/null || true
     echo "exec icewm-session" > ~/.xinitrc
     # Start AntimicroX in IceWM
-    antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+    #antimicrox --hidden --profile $ANTIMICROX_PROFILE &
     startx
     $PS3_PYTHON &
     PS3_PID=\$!
@@ -105,7 +105,7 @@ case \$CHOICE in
     kill \$PS3_PID 2>/dev/null || true
     echo "exec startxfce4" > ~/.xinitrc
     # Start AntimicroX in XFCE
-    antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+    #antimicrox --hidden --profile $ANTIMICROX_PROFILE &
     startx
     $PS3_PYTHON &
     PS3_PID=\$!
@@ -113,8 +113,8 @@ case \$CHOICE in
 4)
     kill $PS3_PID 2>/dev/null || true
     echo "exec twm" > ~/.xinitrc
-    # Start AntimicroX in TWM (optional)
-    antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+    #antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+    onboard &
     startx
     $PS3_PYTHON &
     PS3_PID=$!
@@ -181,14 +181,49 @@ Comment=Start AntimicroX with profile
 EOF
 
 # -------------------------------
-# Step 6: AntimicroX autostart for IceWM
+# Step 6: AntimicroX + Onboard autostart for IceWM
 # -------------------------------
 mkdir -p ~/.icewm
 cat > ~/.icewm/startup << EOF
 #!/bin/bash
+# Start AntimicroX with profile
 antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+
+# Start Onboard on-screen keyboard
+onboard &
 EOF
 chmod +x ~/.icewm/startup
+
+
+# -------------------------------
+# Step6.1: Onboard autostart for xfce4
+# -------------------------------
+# Onboard autostart
+cat > "$AUTOSTART_DIR/onboard.desktop" << EOF
+[Desktop Entry]
+Type=Application
+Exec=onboard
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Onboard
+Comment=Start Onboard on-screen keyboard
+EOF
+
+# -------------------------------
+# Step 6.2: AntimicroX + Onboard autostart for TWM
+# -------------------------------
+mkdir -p ~/.twm
+cat > ~/.twm/startup << EOF
+#!/bin/bash
+# Start AntimicroX with profile
+antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+
+# Start Onboard on-screen keyboard
+onboard &
+EOF
+chmod +x ~/.twm/startup
+
 
 # -------------------------------
 # Step 7: Download RetroArch cores (all .zip files)

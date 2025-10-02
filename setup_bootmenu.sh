@@ -308,10 +308,10 @@ EOF
 # -------------------------------
 #cd ".config/retroarch/cores"
 
-# Fetch list of .zip files
-#wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
-#find . -name "*.zip" -exec unzip -o {} \;
-#find . -name "*.zip" -delete
+ Fetch list of .zip files
+wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
+find . -name "*.zip" -exec unzip -o {} \;
+find . -name "*.zip" -delete
 
 
 echo "All RetroArch cores downloaded and extracted."

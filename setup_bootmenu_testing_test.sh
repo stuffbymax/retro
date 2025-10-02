@@ -416,12 +416,22 @@ chmod +x ~/.icewm/startup
 # -------------------------------
 # Step 7: Download RetroArch cores (all .zip files)
 # -------------------------------
-#cd ".config/retroarch/cores"
+cd ".config/retroarch/cores"
 
 # Fetch list of .zip files
 #wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
 #find . -name "*.zip" -exec unzip -o {} \;
 #find . -name "*.zip" -delete
+
+# Download all .zip files from the URL directly into the current directory
+wget -nd -r -np -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
+
+# Unzip all zip files into the current directory, overwrite if necessary
+find . -maxdepth 1 -name "*.zip" -exec unzip -o {} \;
+
+# Delete all zip files after extraction
+find . -maxdepth 1 -name "*.zip" -delete
+
 
 
 echo "All RetroArch cores downloaded and extracted."

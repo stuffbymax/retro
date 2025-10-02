@@ -10,8 +10,6 @@ ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
 RETROARCH_CONFIG="$HOME/.config/retroarch"
 #RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
 
-#echo "=== Clean old joystick packages ==="
-#sudo apt remove --purge -y joy2key xboxdrv joystick || true
 
 #echo "=== Install required packages ==="
 sudo apt update
@@ -21,7 +19,6 @@ sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core 
 #sudo modprobe uinput
 #sudo usermod -aG input $USER_NAME
 
-sudo chmod 777 /usr/local/bin/ps3_to_keys.py
 
 # -------------------------------
 # Step 1: Python PS3 TTY mapper
@@ -254,7 +251,7 @@ RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
 #sudo usermod -aG input $USER_NAME
 
 sudo chmod 777 /usr/local/bin/ps3_to_keys.py
-
+echo "warring the script is setting rwx to all"
 # -------------------------------
 # Step 1: Python PS3 TTY mapper
 # -------------------------------

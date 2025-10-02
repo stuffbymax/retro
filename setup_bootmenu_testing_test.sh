@@ -96,8 +96,8 @@ case \$CHOICE in
     kill \$PS3_PID 2>/dev/null || true
     echo "exec icewm-session" > ~/.xinitrc
     # Start AntimicroX in IceWM
-    #antimicrox --hidden --profile $ANTIMICROX_PROFILE &
-    #onboard &
+    antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+    onboard &
     startx
     $PS3_PYTHON &
     PS3_PID=\$!
@@ -106,8 +106,8 @@ case \$CHOICE in
     kill \$PS3_PID 2>/dev/null || true
     echo "exec startxfce4" > ~/.xinitrc
     # Start AntimicroX in XFCE
-    #antimicrox --hidden --profile $ANTIMICROX_PROFILE &
-    #onboard &
+    antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+    onboard &
     startx
     $PS3_PYTHON &
     PS3_PID=\$!
@@ -115,8 +115,8 @@ case \$CHOICE in
 4)
     kill $PS3_PID 2>/dev/null || true
     echo "exec twm" > ~/.xinitrc
-    #antimicrox --hidden --profile $ANTIMICROX_PROFILE &
-    #onboard &
+    antimicrox --hidden --profile $ANTIMICROX_PROFILE &
+    onboard &
     startx
     $PS3_PYTHON &
     PS3_PID=$!

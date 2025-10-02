@@ -226,6 +226,82 @@ onboard &
 EOF
 chmod +x ~/.twm/startup
 
+###
+# TWM configuration
+###
+
+# Create TWM directories
+mkdir -p ~/.twm
+mkdir -p ~/.twm/walls
+mkdir -p ~/.twm/icons
+
+# -------------------------------
+# ~/.twm/colors
+# -------------------------------
+cat > ~/.twm/colors << 'EOF'
+Color
+{
+    BorderColor         "#303639"
+    DefaultBackground   "White"
+    DefaultForeground   "Black"
+
+    TitleBackground     "Firebrick"
+    TitleForeground     "White"
+
+    MenuTitleBackground "Firebrick"
+    MenuTitleForeground "White"
+
+    MenuBackground      "#FFFFFF"
+    MenuForeground      "#303639"
+
+    MenuShadowColor     "#303639"
+    MenuBorderColor     "#303639"
+}
+EOF
+
+# -------------------------------
+# ~/.twm/twmrc
+# -------------------------------
+cat > ~/.twm/twmrc << 'EOF'
+# Window border and menu settings
+BorderWidth 1
+FramePadding 1
+TitleButtonBorderWidth 0
+TitlePadding 2
+ButtonIndent 0
+MenuBorderWidth 1
+NoMenuShadows
+
+# Title bar buttons
+IconDirectory "$HOME/.twm/icons"
+LeftTitleButton "resize.xbm"=f.resize
+RightTitleButton "minimize.xbm"=f.iconify
+RightTitleButton "maximize.xbm"=f.fullzoom
+RightTitleButton "close.xbm"=f.delete
+
+# Mouse settings and window behaviors
+Button1 = : root : f.menu "RootMenu"
+Button2 = : root : f.menu "System"
+Button3 = : root : f.menu "TwmWindows"
+
+Movedelta 1
+Button1 = :title: f.function "raise-lower-move"
+Function "raise-lower-move" { f.move f.raiselower }
+
+Button2 = : title|frame : f.menu "WindowMenu"
+Button3 = : title|frame : f.resize
+Button1 = m : window : f.move
+Button3 = s : window : f.resize
+
+Function "winup" { f.circleup }
+"Tab" = m : root|window|frame|title : f.function "winup"
+
+Button1 = m : title|frame : f.zoom
+Button3 = m : title|frame : f.horizoom
+
+DefaultFunction f.nop
+EOF
+
 
 # -------------------------------
 # Step 7: Download RetroArch cores (all .zip files)

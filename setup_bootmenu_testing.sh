@@ -8,12 +8,12 @@ ICEWM_MENU="$HOME/.icewm/menu"
 AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
 RETROARCH_CONFIG="$HOME/.config/retroarch"
-#RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
+RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
 
 
 #echo "=== Install required packages ==="
 sudo apt update
-sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl
+sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux 
 
 # Load uinput and add user to input group
 #sudo modprobe uinput
@@ -213,7 +213,8 @@ Comment=Start Onboard on-screen keyboard
 EOF
 
 # -------------------------------
-# Step 6.2: AntimicroX + Onboard autostart for TWM
+# Step 6.2: AntimicroX + Onboard autostart for TWM 
+# note doesnt work yet with controler 
 # -------------------------------
 mkdir -p ~/.twm
 cat > ~/.twm/startup << EOF
@@ -306,12 +307,12 @@ EOF
 # -------------------------------
 # Step 7: Download RetroArch cores (all .zip files)
 # -------------------------------
-#cd ".config/retroarch/cores"
+cd ".config/retroarch/cores"
 
 # Fetch list of .zip files
-#wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
-#find . -name "*.zip" -exec unzip -o {} \;
-#find . -name "*.zip" -delete
+wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
+find . -name "*.zip" -exec unzip -o {} \;
+find . -name "*.zip" -delete
 
 
 echo "All RetroArch cores downloaded and extracted."
@@ -319,22 +320,22 @@ echo "All RetroArch cores downloaded and extracted."
 # -------------------------------
 # Step 8: Python PS3 mapper service
 # -------------------------------
-#sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
-#[Unit]
-#Description=PS3 Controller Keyboard Mapper
-#After=dev-input-joystick.device
-#
-#[Service]
-#ExecStart=$PS3_PYTHON
-#Restart=always
-#User=root
-#
-#[Install]
-#WantedBy=multi-user.target
-#EOF
-#
-#sudo systemctl daemon-reload
-#sudo systemctl enable ps3keys
-#sudo systemctl start ps3keys
+sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
+[Unit]
+Description=PS3 Controller Keyboard Mapper
+After=dev-input-joystick.device
+
+[Service]
+ExecStart=$PS3_PYTHON
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable ps3keys
+sudo systemctl start ps3keys
 
 echo "=== Setup complete! Reboot to test ==="

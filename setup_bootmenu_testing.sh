@@ -149,7 +149,6 @@ for event in device.read_loop():
                 ui.emit(BTN_MAP.get(1003, uinput.KEY_RIGHT), 1)
                 ui.emit(BTN_MAP.get(1003, uinput.KEY_RIGHT), 0)
 EOF
-#sudo chmod +x $PS3_PYTHON
 sudo chmod 777 $PS3_PYTHON
 
 # -------------------------------

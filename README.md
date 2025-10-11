@@ -1,3 +1,5 @@
+### README made BY AI
+
 # Boot Menu & Controller Mapper Setup
 
 This repository contains a Bash script to set up a boot menu on Debian-based systems, integrate gamepad support via AntimicroX and Python, and configure multiple lightweight desktop environments (IceWM, XFCE4, TWM).
@@ -45,17 +47,11 @@ This repository contains a Bash script to set up a boot menu on Debian-based sys
 
 ## Installation
 
-1. **Clone the repository**
-
 ```bash
-git clone <repository-url>
-cd <repository-directory>
-```
-
-2. **Run the setup script**
-
-```bash
-sudo bash setup.sh
+git clone https://github.com/stuffbymax/retro
+cd retro
+chmod +X setup_bootmenu_testing.sh
+./setup_bootmenu_testing.sh
 ```
 
 3. **Reboot**

@@ -1,0 +1,104 @@
+# Boot Menu & Controller Mapper Setup
+
+This repository contains a Bash script to set up a boot menu on Debian-based systems, integrate gamepad support via AntimicroX and Python, and configure multiple lightweight desktop environments (IceWM, XFCE4, TWM).
+
+> ⚠️ **Note:** External files like AntimicroX profiles are not yet uploaded to GitHub.
+
+---
+
+## Features
+
+* **Boot Menu**
+  Provides a menu on TTY1 to launch:
+
+  1. RetroArch (fullscreen)
+  2. IceWM desktop
+  3. XFCE4 desktop
+  4. TWM desktop
+  5. Reboot
+  6. Shutdown
+
+* **Gamepad Support**
+  Python script maps PS3, PS4, Xbox, and generic controllers to keyboard keys for menus and games.
+
+* **Autostart Configurations**
+
+  * AntimicroX profiles for gamepad mapping
+  * Onboard on-screen keyboard for IceWM and XFCE4
+  * Desktop environment-specific autostart scripts
+
+* **Lightweight Desktop Environments**
+  IceWM, XFCE4, and TWM with basic menus and configurations.
+
+* **RetroArch Cores**
+  Automatically downloads and extracts the latest RetroArch cores for Linux x86_64.
+
+---
+
+## Prerequisites
+
+* Debian-based Linux distribution (Debian, Ubuntu, etc.)
+* Access to `sudo`
+* Python 3 with `evdev` and `uinput` modules
+
+---
+
+## Installation
+
+1. **Clone the repository**
+
+```bash
+git clone <repository-url>
+cd <repository-directory>
+```
+
+2. **Run the setup script**
+
+```bash
+sudo bash setup.sh
+```
+
+3. **Reboot**
+   The boot menu will appear automatically on TTY1.
+
+---
+
+## File Locations
+
+| File / Directory                | Purpose                                                |
+| ------------------------------- | ------------------------------------------------------ |
+| `/usr/local/bin/bootmenu.sh`    | Boot menu launcher script                              |
+| `/usr/local/bin/ps3_to_keys.py` | Python gamepad-to-keyboard mapper                      |
+| `$HOME/.icewm/menu`             | IceWM menu configuration                               |
+| `$HOME/.icewm/startup`          | IceWM autostart script (AntimicroX + Onboard)          |
+| `$HOME/.config/autostart/`      | XFCE4 autostart desktop entries (AntimicroX + Onboard) |
+| `$HOME/.twm/startup`            | TWM autostart script                                   |
+| `$HOME/.twm/colors`             | TWM color configuration                                |
+| `$HOME/.twm/twmrc`              | TWM main configuration                                 |
+| `.config/retroarch/cores/`      | Downloaded RetroArch cores                             |
+
+---
+
+## Controller Mapping
+
+Supported controllers and mappings:
+
+* **PS3 / PS4**: X/Cross → Enter, Circle → Escape, Square → Backspace, Triangle → Space, D-Pad → Arrow keys
+* **Xbox / Generic**: A → Enter, B → Escape, X → Backspace, Y → Space, D-Pad → Arrow keys
+
+> You can modify the mapping inside `ps3_to_keys.py`.
+
+---
+
+## Known Issues
+* TWM autostart currently does not fully support gamepad input with AntimicroX.
+* External AntimicroX profiles must be added manually (`bootmenu_gamepad_profile.amgp`).
+
+---
+
+## License Under
+
+MIT
+
+---
+

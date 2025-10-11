@@ -1,3 +1,5 @@
+#note external files are not yet uploaded to github
+
 #!/bin/bash
 set -e
 
@@ -7,8 +9,6 @@ PS3_PYTHON="/usr/local/bin/ps3_to_keys.py"
 ICEWM_MENU="$HOME/.icewm/menu"
 AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
-RETROARCH_CONFIG="$HOME/.config/retroarch"
-RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
 
 
 #echo "=== Install required packages ==="
@@ -62,7 +62,8 @@ for event in device.read_loop():
 
 
 EOF
-sudo chmod +x $PS3_PYTHON
+#sudo chmod +x $PS3_PYTHON
+sudo chmod 777 $PS3_PYTHON
 
 # -------------------------------
 # Step 2: Boot menu script
@@ -313,9 +314,9 @@ EOF
 # cd ".config/retroarch/cores"
 
 # # Fetch list of .zip files
-# wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
-# find . -name "*.zip" -exec unzip -o {} \;
-# find . -name "*.zip" -delete
+sudo wget -r -np -nH --cut-dirs=4 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
+sudo find . -name "*.zip" -exec unzip -o {} \;
+sudo find . -name "*.zip" -delete
 
 
 # echo "All RetroArch cores downloaded and extracted."

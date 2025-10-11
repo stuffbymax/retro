@@ -310,35 +310,35 @@ EOF
 # Step 7: Latest Download RetroArch cores (all .zip files)
 # Because debian has older files
 # -------------------------------
-cd ".config/retroarch/cores"
+# cd ".config/retroarch/cores"
 
-# Fetch list of .zip files
-wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
-find . -name "*.zip" -exec unzip -o {} \;
-find . -name "*.zip" -delete
+# # Fetch list of .zip files
+# wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
+# find . -name "*.zip" -exec unzip -o {} \;
+# find . -name "*.zip" -delete
 
 
-echo "All RetroArch cores downloaded and extracted."
+# echo "All RetroArch cores downloaded and extracted."
 
 # -------------------------------
 # Step 8: Python PS3 mapper service
 # -------------------------------
-sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
-[Unit]
-Description=PS3 Controller Keyboard Mapper
-After=dev-input-joystick.device
+# sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
+# [Unit]
+# Description=PS3 Controller Keyboard Mapper
+# After=dev-input-joystick.device
 
-[Service]
-ExecStart=$PS3_PYTHON
-Restart=always
-User=root
+# [Service]
+# ExecStart=$PS3_PYTHON
+# Restart=always
+# User=root
 
-[Install]
-WantedBy=multi-user.target
-EOF
+# [Install]
+# WantedBy=multi-user.target
+# EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable ps3keys
-sudo systemctl start ps3keys
+# sudo systemctl daemon-reload
+# sudo systemctl enable ps3keys
+# sudo systemctl start ps3keys
 
 echo "=== Setup complete! Reboot to test ==="

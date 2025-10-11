@@ -73,27 +73,12 @@ BUTTON_MAPS = {
 
 def find_gamepad():
     devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
-    gamepads = []
-
     for device in devices:
         if device.capabilities().get(evdev.ecodes.EV_KEY):
-            gamepads.append(device)
-
-    if not gamepads:
-        print("No input devices with keys found.")
-        sys.exit(1)
-
-    # If multiple gamepads, show list and let user pick
-    print("Available Gamepads:")
-    for i, dev in enumerate(gamepads):
-        print(f"[{i}] {dev.name} - {dev.path}")
-
-    try:
-        choice = int(input("Select device number (default 0): ") or "0")
-        return gamepads[choice]
-    except (IndexError, ValueError):
-        print("Invalid selection.")
-        sys.exit(1)
+            print(f"Auto-selected gamepad: {device.name} ({device.path})")
+            return device
+    print("No input devices with keys found.")
+    sys.exit(1)
 
 def detect_controller_type(device):
     name = device.name.upper()
@@ -121,6 +106,7 @@ for event in device.read_loop():
         key = BTN_MAP.get(event.code)
         if key is not None:
             ui.emit(key, event.value)
+
 
 EOF
 sudo chmod +x $PS3_PYTHON

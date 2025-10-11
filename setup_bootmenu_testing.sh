@@ -25,81 +25,34 @@ sudo usermod -aG input $USER_NAME
 # -------------------------------
 sudo tee $PS3_PYTHON > /dev/null << 'EOF'
 #!/usr/bin/env python3
-import evdev
-import uinput
-import sys
+import evdev, uinput, sys
 
-# Supported gamepad names (extendable)
-SUPPORTED_CONTROLLERS = {
-    "PLAYSTATION": "ps3",
-    "PS3": "ps3",
-    "XBOX": "xbox",
-    "GENERIC": "generic"
-}
-
-# Button maps for known controllers (can be customized)
-BUTTON_MAPS = {
-    "ps3": {
-        304: uinput.KEY_ENTER,      # X
-        305: uinput.KEY_ESC,        # Circle
-        307: uinput.KEY_BACKSPACE,  # Square
-        308: uinput.KEY_SPACE,      # Triangle
-        544: uinput.KEY_UP,         # D-pad Up
-        545: uinput.KEY_DOWN,       # D-pad Down
-        546: uinput.KEY_LEFT,       # D-pad Left
-        547: uinput.KEY_RIGHT       # D-pad Right
-    },
-    "xbox": {
-        304: uinput.KEY_ENTER,      # A
-        305: uinput.KEY_ESC,        # B
-        307: uinput.KEY_BACKSPACE,  # X
-        308: uinput.KEY_SPACE,      # Y
-        544: uinput.KEY_UP,         # D-pad Up
-        545: uinput.KEY_DOWN,       # D-pad Down
-        546: uinput.KEY_LEFT,       # D-pad Left
-        547: uinput.KEY_RIGHT       # D-pad Right
-    },
-    "generic": {
-        304: uinput.KEY_ENTER,      # Button 0
-        305: uinput.KEY_ESC,        # Button 1
-        307: uinput.KEY_BACKSPACE,  # Button 2
-        308: uinput.KEY_SPACE,      # Button 3
-        544: uinput.KEY_UP,
-        545: uinput.KEY_DOWN,
-        546: uinput.KEY_LEFT,
-        547: uinput.KEY_RIGHT
-    }
-}
-
-def find_gamepad():
+def find_ps3_controller():
     devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
     for device in devices:
-        if device.capabilities().get(evdev.ecodes.EV_KEY):
-            print(f"Auto-selected gamepad: {device.name} ({device.path})")
+        if "PLAYSTATION" in device.name.upper() or "PS3" in device.name.upper():
             return device
-    print("No input devices with keys found.")
+    print("PS3 controller not found.")
     sys.exit(1)
 
-def detect_controller_type(device):
-    name = device.name.upper()
-    for keyword, controller_type in SUPPORTED_CONTROLLERS.items():
-        if keyword in name:
-            return controller_type
-    return "generic"
+device = find_ps3_controller()
+print(f"Using device: {device.path} ({device.name})")
 
-# Main
-device = find_gamepad()
-controller_type = detect_controller_type(device)
-
-print(f"Using device: {device.path} ({device.name}) as type '{controller_type}'")
-
-BTN_MAP = BUTTON_MAPS.get(controller_type, BUTTON_MAPS["generic"])
-
-# Setup uinput
-events = set(BTN_MAP.values())
+events = (uinput.KEY_ENTER, uinput.KEY_ESC, uinput.KEY_SPACE, uinput.KEY_BACKSPACE,
+          uinput.KEY_UP, uinput.KEY_DOWN, uinput.KEY_LEFT, uinput.KEY_RIGHT)
 ui = uinput.Device(events)
 
-# Read loop
+BTN_MAP = {
+    304: uinput.KEY_ENTER,  # X
+    305: uinput.KEY_ESC,    # Circle
+    307: uinput.KEY_BACKSPACE, # Square
+    308: uinput.KEY_SPACE,      # Triangle
+    544: uinput.KEY_UP,         # D-pad Up
+    545: uinput.KEY_DOWN,       # D-pad Down
+    546: uinput.KEY_LEFT,       # D-pad Left
+    547: uinput.KEY_RIGHT       # D-pad Right
+}
+
 device.grab()
 for event in device.read_loop():
     if event.type == evdev.ecodes.EV_KEY:

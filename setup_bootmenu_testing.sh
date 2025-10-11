@@ -16,9 +16,11 @@ sudo apt update
 sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux 
 
 # Load uinput and add user to input group
-sudo modprobe uinput
-sudo usermod -aG input $USER_NAME
+echo -e "\e[31mWarning: this will set up rw-rw-rw- permissions to /dev/uinput\e[0m"
 
+#sudo modprobe uinput
+#sudo usermod -aG input $USER_NAME
+sudo chmod 666 /dev/uinput
 
 # -------------------------------
 # Step 1: Python PS3 TTY mapper

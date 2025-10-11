@@ -94,7 +94,9 @@ Supported controllers and mappings:
 
 ## License Under
 
-MIT
+MIT License
+
+Copyright (c) 2025 stuffbymax
 
 ---
 

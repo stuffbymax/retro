@@ -429,5 +429,3 @@ sudo find . -name "*.zip" -delete
 # sudo systemctl start ps3keys
 
 echo "=== Setup complete! Reboot to test ==="
-echo "==== Now rebooting ===="
-sudo reboot

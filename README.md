@@ -4,8 +4,7 @@
 
 This repository contains a Bash script to set up a boot menu on Debian-based systems, integrate gamepad support via AntimicroX and Python, and configure multiple lightweight desktop environments (IceWM, XFCE4, TWM).
 
-> ⚠️ **Note:** External files like AntimicroX profiles are not yet uploaded to GitHub.
-
+> ⚠️ **Note:** External files like AntimicroX profiles and retroarch gamepad keybinds are not yet uploaded to GitHub. This script is provided "as is". It may fail to apply some settings, leave keybindings unset, or choose different drivers (Intel by default). Do not run on critical systems — test in a disposable environment first. By continuing you acknowledge these limitations.
 ---
 
 ## Features

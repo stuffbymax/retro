@@ -163,13 +163,16 @@ PS3_PID=\$!
 while true; do
 CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
 --title "Boot Menu" \
---menu "Choose an option:" 15 50 7 \
+--menu "Choose an option:" 20 60 9 \
 1 "Launch RetroArch (fullscreen)" \
 2 "Launch IceWM Desktop" \
 3 "Launch XFCE4 Desktop" \
 4 "Launch TWM Desktop" \
-5 "Reboot" \
-6 "Shutdown" 3>&1 1>&2 2>&3)
+5 "Update System (apt upgrade)" \
+6 "Open Shell (TTY)" \
+7 "Network Configuration" \
+8 "Reboot" \
+9 "Shutdown" 3>&1 1>&2 2>&3)
 
 
 clear
@@ -211,16 +214,57 @@ case \$CHOICE in
     PS3_PID=$!
     ;;
 5)
+    # System update with animated '===' progress bar
+    clear
+    echo "=== Updating system... please wait ==="
+    echo "(Full log at /tmp/apt_update.log)"
+    sudo apt update -y && sudo apt upgrade -y &> /tmp/apt_update.log &
+    PID=$!
+    BAR=""
+    WIDTH=40
+    while kill -0 $PID 2>/dev/null; do
+        if [ ${#BAR} -lt $WIDTH ]; then
+            BAR="$BAR="
+        else
+            BAR=""
+        fi
+        printf "\r[%s] Updating..." "$BAR"
+        sleep 0.2
+    done
+    wait $PID
+    printf "\r[%s] Update complete!          \n" "$(printf '=%.0s' $(seq 1 $WIDTH))"
+    sleep 2
+    ;;
+6)
+    clear
+    echo "=== Entering shell ==="
+    echo "Type 'exit' to return to the Boot Menu."
+    bash
+    ;;
+7)
+    clear
+    echo "=== Network Configuration ==="
+    echo "Use your controller to navigate!"
+    echo "Launching nmtui..."
+    sleep 1
+    $PS3_PYTHON &
+    PS3_PID=$!
+    sudo nmtui
+    kill $PS3_PID 2>/dev/null || true
+    echo "Network configuration done!"
+    sleep 2
+    ;;
+8)
     kill $PS3_PID 2>/dev/null || true
     sudo reboot
     ;;
-6)
+9)
     kill $PS3_PID 2>/dev/null || true
     sudo shutdown now
     ;;
-
 esac
 done
+
 EOF
 sudo chmod +x $BOOTMENU
 

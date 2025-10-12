@@ -1,3 +1,5 @@
+#note external files are not yet uploaded to github
+
 #!/bin/bash
 set -e
 
@@ -7,17 +9,39 @@ PS3_PYTHON="/usr/local/bin/ps3_to_keys.py"
 ICEWM_MENU="$HOME/.icewm/menu"
 AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
-RETROARCH_CONFIG="$HOME/.config/retroarch"
-#RETROARCH_CORES_DIR="$HOME/.config/retroarch/cores"
+
+# -------------------------------
+# WARNING / ACKNOWLEDGEMENT
+# -------------------------------
+echo -e "\e[33mWARNING: This script is experimental and may NOT work as intended!\e[0m"
+echo -e "\e[33mKnown issues:\e[0m"
+echo -e "\e[33m - Keybindings may be missing or incomplete\e[0m"
+echo -e "\e[33m - Drivers may default to Intel only\e[0m"
+echo -e "\e[33m - Some features require manual follow-up\e[0m"
+echo -e "\e[33m - External files are not yet uploaded to GitHub\e[0m"
+echo ""
+
+read -p "Do you want to continue? [y/N]: " CONFIRM
+CONFIRM=${CONFIRM,,}  # lowercase
+if [[ "$CONFIRM" != "y" ]]; then
+    echo "Exiting script. No changes were made."
+    exit 1
+fi
+
 
 
 #echo "=== Install required packages ==="
 sudo apt update
-sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl
+sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux 
 
 # Load uinput and add user to input group
-#sudo modprobe uinput
-#sudo usermod -aG input $USER_NAME
+echo -e "\e[31mWarning: this will set up rw-rw-rw- permissions to /dev/uinput\e[0m"
+
+sudo usermod -aG input $USER_NAME
+sudo modprobe uinput
+sudo chmod 777 /dev/uinput
+
+echo "uinput" | sudo tee /etc/modules-load.d/uinput.conf
 
 
 # -------------------------------
@@ -25,27 +49,36 @@ sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core 
 # -------------------------------
 sudo tee $PS3_PYTHON > /dev/null << 'EOF'
 #!/usr/bin/env python3
-import evdev, uinput, sys
+import evdev
+import uinput
+import sys
 
-def find_ps3_controller():
+# 1. Find any controller with buttons
+def find_controller():
     devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
     for device in devices:
-        if "PLAYSTATION" in device.name.upper() or "PS3" in device.name.upper():
+        if evdev.ecodes.EV_KEY in device.capabilities():
             return device
-    print("PS3 controller not found.")
+    print("No controller found.")
     sys.exit(1)
 
-device = find_ps3_controller()
+device = find_controller()
 print(f"Using device: {device.path} ({device.name})")
 
-events = (uinput.KEY_ENTER, uinput.KEY_ESC, uinput.KEY_SPACE, uinput.KEY_BACKSPACE,
-          uinput.KEY_UP, uinput.KEY_DOWN, uinput.KEY_LEFT, uinput.KEY_RIGHT)
+# 2. Create uinput device with all mapped keys
+events = [
+    uinput.KEY_ENTER, uinput.KEY_ESC, uinput.KEY_BACKSPACE, uinput.KEY_SPACE,
+    uinput.KEY_UP, uinput.KEY_DOWN, uinput.KEY_LEFT, uinput.KEY_RIGHT
+]
 ui = uinput.Device(events)
 
-BTN_MAP = {
-    304: uinput.KEY_ENTER,  # X
-    305: uinput.KEY_ESC,    # Circle
-    307: uinput.KEY_BACKSPACE, # Square
+# 3. Individual BTN_MAP dictionaries
+
+# PS3
+BTN_MAP_PS3 = {
+    304: uinput.KEY_ENTER,      # X
+    305: uinput.KEY_ESC,        # Circle
+    307: uinput.KEY_BACKSPACE,  # Square
     308: uinput.KEY_SPACE,      # Triangle
     544: uinput.KEY_UP,         # D-pad Up
     545: uinput.KEY_DOWN,       # D-pad Down
@@ -53,14 +86,92 @@ BTN_MAP = {
     547: uinput.KEY_RIGHT       # D-pad Right
 }
 
+# PS4
+BTN_MAP_PS4 = {
+    304: uinput.KEY_ENTER,      # Cross
+    305: uinput.KEY_ESC,        # Circle
+    307: uinput.KEY_BACKSPACE,  # Square
+    308: uinput.KEY_SPACE,      # Triangle
+    544: uinput.KEY_UP,         # D-pad Up
+    545: uinput.KEY_DOWN,       # D-pad Down
+    546: uinput.KEY_LEFT,       # D-pad Left
+    547: uinput.KEY_RIGHT       # D-pad Right
+}
+
+# Xbox 360 / One
+BTN_MAP_XBOX = {
+    304: uinput.KEY_ENTER,      # A
+    305: uinput.KEY_ESC,        # B
+    307: uinput.KEY_BACKSPACE,  # X
+    308: uinput.KEY_SPACE,      # Y
+    544: uinput.KEY_UP,         # D-pad Up (for EV_KEY devices)
+    545: uinput.KEY_DOWN,       # D-pad Down
+    546: uinput.KEY_LEFT,       # D-pad Left
+    547: uinput.KEY_RIGHT       # D-pad Right
+}
+
+# Generic controller
+BTN_MAP_GENERIC = {
+    304: uinput.KEY_ENTER,
+    305: uinput.KEY_ESC,
+    307: uinput.KEY_BACKSPACE,
+    308: uinput.KEY_SPACE,
+    544: uinput.KEY_UP,
+    545: uinput.KEY_DOWN,
+    546: uinput.KEY_LEFT,
+    547: uinput.KEY_RIGHT
+}
+
+# Generic Xbox pad (hat axes)
+BTN_MAP_GENERIC_XBOX = {
+    304: uinput.KEY_ENTER,
+    305: uinput.KEY_ESC,
+    307: uinput.KEY_BACKSPACE,
+    308: uinput.KEY_SPACE,
+    1000: uinput.KEY_UP,        # D-pad Up (ABS_HAT0Y = -1)
+    1001: uinput.KEY_DOWN,      # D-pad Down (ABS_HAT0Y = 1)
+    1002: uinput.KEY_LEFT,      # D-pad Left (ABS_HAT0X = -1)
+    1003: uinput.KEY_RIGHT      # D-pad Right (ABS_HAT0X = 1)
+}
+
+# 4. Choose which BTN_MAP to use
+# Example: you can select based on device name
+if "PLAYSTATION" in device.name.upper() or "PS3" in device.name.upper():
+    BTN_MAP = BTN_MAP_PS3
+elif "PS4" in device.name.upper():
+    BTN_MAP = BTN_MAP_PS4
+elif "XBOX" in device.name.upper():
+    BTN_MAP = BTN_MAP_XBOX
+else:
+    BTN_MAP = BTN_MAP_GENERIC_XBOX  # fallback for generic/Xbox controllers
+
+# 5. Grab the device and emit key events
 device.grab()
 for event in device.read_loop():
+    # EV_KEY buttons
     if event.type == evdev.ecodes.EV_KEY:
         key = BTN_MAP.get(event.code)
         if key is not None:
             ui.emit(key, event.value)
+
+    # EV_ABS for generic Xbox D-pad
+    elif event.type == evdev.ecodes.EV_ABS:
+        if event.code == evdev.ecodes.ABS_HAT0Y:
+            if event.value == -1:  # Up
+                ui.emit(BTN_MAP.get(1000, uinput.KEY_UP), 1)
+                ui.emit(BTN_MAP.get(1000, uinput.KEY_UP), 0)
+            elif event.value == 1:  # Down
+                ui.emit(BTN_MAP.get(1001, uinput.KEY_DOWN), 1)
+                ui.emit(BTN_MAP.get(1001, uinput.KEY_DOWN), 0)
+        elif event.code == evdev.ecodes.ABS_HAT0X:
+            if event.value == -1:  # Left
+                ui.emit(BTN_MAP.get(1002, uinput.KEY_LEFT), 1)
+                ui.emit(BTN_MAP.get(1002, uinput.KEY_LEFT), 0)
+            elif event.value == 1:  # Right
+                ui.emit(BTN_MAP.get(1003, uinput.KEY_RIGHT), 1)
+                ui.emit(BTN_MAP.get(1003, uinput.KEY_RIGHT), 0)
 EOF
-sudo chmod +x $PS3_PYTHON
+sudo chmod 777 $PS3_PYTHON
 
 # -------------------------------
 # Step 2: Boot menu script
@@ -74,13 +185,16 @@ PS3_PID=\$!
 while true; do
 CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
 --title "Boot Menu" \
---menu "Choose an option:" 15 50 7 \
+--menu "Choose an option:" 20 60 9 \
 1 "Launch RetroArch (fullscreen)" \
 2 "Launch IceWM Desktop" \
 3 "Launch XFCE4 Desktop" \
 4 "Launch TWM Desktop" \
-5 "Reboot" \
-6 "Shutdown" 3>&1 1>&2 2>&3)
+5 "Update System (apt upgrade)" \
+6 "Open Shell (TTY)" \
+7 "Network Configuration" \
+8 "Reboot" \
+9 "Shutdown" 3>&1 1>&2 2>&3)
 
 
 clear
@@ -122,16 +236,59 @@ case \$CHOICE in
     PS3_PID=$!
     ;;
 5)
+    # System update with animated '===' progress bar
+    clear
+    echo "=== Updating system... please wait ==="
+    echo "(Full log at /tmp/apt_update.log)"
+    sudo apt update -y && sudo apt upgrade -y &> /tmp/apt_update.log &
+    PID=$!
+    BAR=""
+    WIDTH=40
+    while kill -0 $PID 2>/dev/null; do
+        if [ ${#BAR} -lt $WIDTH ]; then
+            BAR="$BAR="
+        else
+            BAR=""
+        fi
+        printf "\r[%s] Updating..." "$BAR"
+        sleep 0.2
+    done
+    wait $PID
+    printf "\r[%s] Update complete!          \n" "$(printf '=%.0s' $(seq 1 $WIDTH))"
+    sleep 2
+    echo "exiting"
+    exit
+    ;;
+6)
+    clear
+    echo "=== Entering shell ==="
+    echo "Type 'exit' to return to the Boot Menu."
+    bash
+    ;;
+7)
+    clear
+    echo "=== Network Configuration ==="
+    echo "Use your controller to navigate!"
+    echo "Launching nmtui..."
+    sleep 1
+    $PS3_PYTHON &
+    PS3_PID=$!
+    sudo nmtui
+    kill $PS3_PID 2>/dev/null || true
+    echo "Network configuration done!"
+    sleep 2
+    ;;
+8)
     kill $PS3_PID 2>/dev/null || true
     sudo reboot
     ;;
-6)
+9)
     kill $PS3_PID 2>/dev/null || true
     sudo shutdown now
     ;;
-
 esac
 done
+
 EOF
 sudo chmod +x $BOOTMENU
 
@@ -213,7 +370,8 @@ Comment=Start Onboard on-screen keyboard
 EOF
 
 # -------------------------------
-# Step 6.2: AntimicroX + Onboard autostart for TWM
+# Step 6.2: AntimicroX + Onboard autostart for TWM 
+# note doesnt work yet with controler 
 # -------------------------------
 mkdir -p ~/.twm
 cat > ~/.twm/startup << EOF
@@ -304,37 +462,38 @@ EOF
 
 
 # -------------------------------
-# Step 7: Download RetroArch cores (all .zip files)
-# -------------------------------
-#cd ".config/retroarch/cores"
+# Step 7: Latest Download RetroArch cores (all .zip files)
+# Because debian has older files
+# ------------------------------- 
+cd ".config/retroarch/cores"
 
- Fetch list of .zip files
-wget -r -np -nH --cut-dirs=3 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
-find . -name "*.zip" -exec unzip -o {} \;
-find . -name "*.zip" -delete
+# # Fetch list of .zip files
+sudo wget -r -np -nH --cut-dirs=4 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
+sudo find . -name "*.zip" -exec unzip -o {} \;
+sudo find . -name "*.zip" -delete
 
 
-echo "All RetroArch cores downloaded and extracted."
+ echo "All RetroArch cores downloaded and extracted."
 
 # -------------------------------
 # Step 8: Python PS3 mapper service
 # -------------------------------
-#sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
-#[Unit]
-#Description=PS3 Controller Keyboard Mapper
-#After=dev-input-joystick.device
-#
-#[Service]
-#ExecStart=$PS3_PYTHON
-#Restart=always
-#User=root
-#
-#[Install]
-#WantedBy=multi-user.target
-#EOF
-#
-#sudo systemctl daemon-reload
-#sudo systemctl enable ps3keys
-#sudo systemctl start ps3keys
+ sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
+ [Unit]
+ Description=PS3 Controller Keyboard Mapper
+ After=dev-input-joystick.device
+
+ [Service]
+ ExecStart=$PS3_PYTHON
+ Restart=always
+ User=root
+
+ [Install]
+ WantedBy=multi-user.target
+ EOF
+
+ sudo systemctl daemon-reload
+ sudo systemctl enable ps3keys
+ sudo systemctl start ps3keys
 
 echo "=== Setup complete! Reboot to test ==="

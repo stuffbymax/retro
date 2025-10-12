@@ -473,7 +473,7 @@ sudo find . -name "*.zip" -exec unzip -o {} \;
 sudo find . -name "*.zip" -delete
 
 
-# echo "All RetroArch cores downloaded and extracted."
+echo "All RetroArch cores downloaded and extracted."
 
 # -------------------------------
 # Step 8: Python PS3 mapper service

@@ -11,6 +11,30 @@ AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
 
 
+
+#!/bin/bash
+set -e
+
+# -------------------------------
+# WARNING / ACKNOWLEDGEMENT
+# -------------------------------
+echo -e "\e[33mWARNING: This script is experimental and may NOT work as intended!\e[0m"
+echo -e "\e[33mKnown issues:\e[0m"
+echo -e "\e[33m - Keybindings may be missing or incomplete\e[0m"
+echo -e "\e[33m - Drivers may default to Intel only\e[0m"
+echo -e "\e[33m - Some features require manual follow-up\e[0m"
+echo -e "\e[33m - External files are not yet uploaded to GitHub\e[0m"
+echo ""
+
+read -p "Do you want to continue? [y/N]: " CONFIRM
+CONFIRM=${CONFIRM,,}  # lowercase
+if [[ "$CONFIRM" != "y" ]]; then
+    echo "Exiting script. No changes were made."
+    exit 1
+fi
+
+
+
 #echo "=== Install required packages ==="
 sudo apt update
 sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux 

@@ -440,8 +440,8 @@ EOF
 # -------------------------------
 # Step 7: Latest Download RetroArch cores (all .zip files)
 # Because debian has older files
-# -------------------------------
-# cd ".config/retroarch/cores"
+# ------------------------------- 
+cd ".config/retroarch/cores"
 
 # # Fetch list of .zip files
 sudo wget -r -np -nH --cut-dirs=4 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/

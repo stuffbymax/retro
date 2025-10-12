@@ -237,6 +237,8 @@ case \$CHOICE in
     wait $PID
     printf "\r[%s] Update complete!          \n" "$(printf '=%.0s' $(seq 1 $WIDTH))"
     sleep 2
+    echo "exiting"
+    exit
     ;;
 6)
     clear

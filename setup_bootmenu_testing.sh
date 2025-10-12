@@ -10,11 +10,6 @@ ICEWM_MENU="$HOME/.icewm/menu"
 AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
 
-
-
-#!/bin/bash
-set -e
-
 # -------------------------------
 # WARNING / ACKNOWLEDGEMENT
 # -------------------------------

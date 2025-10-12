@@ -18,9 +18,12 @@ sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core 
 # Load uinput and add user to input group
 echo -e "\e[31mWarning: this will set up rw-rw-rw- permissions to /dev/uinput\e[0m"
 
-#sudo usermod -aG input $USER_NAME
+sudo usermod -aG input $USER_NAME
 sudo modprobe uinput
 sudo chmod 777 /dev/uinput
+
+echo "uinput" | sudo tee /etc/modules-load.d/uinput.conf
+
 
 # -------------------------------
 # Step 1: Python PS3 TTY mapper

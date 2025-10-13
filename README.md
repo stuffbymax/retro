@@ -12,12 +12,12 @@ This repository contains a Bash script to set up a boot menu on Debian-based sys
 * **Boot Menu**
   Provides a menu on TTY1 to launch:
 
-  1. RetroArch (fullscreen)
-  2. IceWM desktop
-  3. XFCE4 desktop
-  4. TWM desktop
-  5. Reboot
-  6. Shutdown
+1. RetroArch (fullscreen)
+2. IceWM desktop
+3. XFCE4 desktop
+4. TWM desktop
+5. Reboot
+6. Shutdown
 
 * **Gamepad Support**
   Python script maps PS3, PS4, Xbox, and generic controllers to keyboard keys for menus and games.

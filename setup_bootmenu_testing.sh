@@ -376,6 +376,9 @@ EOF
 # Step 6.2: AntimicroX + Onboard autostart for TWM 
 # note doesnt work yet with controler 
 # -------------------------------
+
+echo "twm is not yet compatiable to antimicrox nor ps3keys.py"
+
 mkdir -p ~/.twm
 cat > ~/.twm/startup << EOF
 #!/bin/bash

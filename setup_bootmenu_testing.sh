@@ -3,6 +3,8 @@
 #!/bin/bash
 set -e
 
+exec > >(tee -a ~/log.txt) 2>&1
+
 USER_NAME=$(whoami)
 BOOTMENU="/usr/local/bin/bootmenu.sh"
 PS3_PYTHON="/usr/local/bin/ps3_to_keys.py"
@@ -497,4 +499,5 @@ echo -e "\e[42mAll RetroArch cores downloaded and extracted.\e[0m"
 # sudo systemctl enable ps3keys
 # sudo systemctl start ps3keys
 
-echo "=== Setup complete! Reboot to test ==="
+echo -e "\e[42m=== Setup complete! Reboot to test ===\e[0m"
+echo -e "\e[41m to check errors check./log.txt \e[0m"

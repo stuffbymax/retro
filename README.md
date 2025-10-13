@@ -93,9 +93,7 @@ Supported controllers and mappings:
 
 ## License Under
 
-MIT License
-
-Copyright (c) 2025 stuffbymax
+[MIT License](https://github.com/stuffbymax/retro/blob/main/LICENSE)
 
 ---
 

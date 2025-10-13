@@ -93,7 +93,7 @@ Supported controllers and mappings:
 
 ## License Under
 
-[MIT License](https://github.com/stuffbymax/retro/blob/main/LICENSE)
+[MIT License](https://raw.githubusercontent.com/stuffbymax/retro/refs/heads/main/LICENSE)
 
 ---
 

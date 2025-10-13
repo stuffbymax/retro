@@ -189,7 +189,7 @@ CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
 1 "Launch RetroArch (fullscreen)" \
 2 "Launch IceWM Desktop" \
 3 "Launch XFCE4 Desktop" \
-4 "Launch TWM Desktop" \
+4 "Launch TWM Desktop (not finished)" \
 5 "Update System (apt upgrade)" \
 6 "Open Shell (TTY)" \
 7 "Network Configuration" \
@@ -474,7 +474,7 @@ sudo find . -name "*.zip" -exec unzip -o {} \;
 sudo find . -name "*.zip" -delete
 
 
-echo "All RetroArch cores downloaded and extracted."
+echo -e "\e[42mAll RetroArch cores downloaded and extracted.\e[0m"
 
 # -------------------------------
 # Step 8: Python PS3 mapper service

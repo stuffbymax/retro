@@ -97,3 +97,9 @@ Supported controllers and mappings:
 
 ---
 
+## screenshot
+
+<img width="482" height="319" alt="image" src="https://github.com/user-attachments/assets/9cdc5bde-563e-4475-87a2-d78870f416f1" />
+
+
+

@@ -3,6 +3,7 @@
 #!/bin/bash
 set -e
 
+# this will log everything
 exec > >(tee -a ~/log.txt) 2>&1
 
 USER_NAME=$(whoami)
@@ -472,7 +473,7 @@ EOF
 # Because debian has older files
 # ------------------------------- 
 mkdir .config/retroarch/cores
-cd ".config/retroarch/cores"
+cd .config/retroarch/cores
 
 # # Fetch list of .zip files
 sudo wget -r -np -nH --cut-dirs=4 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/

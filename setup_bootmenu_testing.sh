@@ -471,6 +471,7 @@ EOF
 # Step 7: Latest Download RetroArch cores (all .zip files)
 # Because debian has older files
 # ------------------------------- 
+mkdir .config/retroarch/cores
 cd ".config/retroarch/cores"
 
 # # Fetch list of .zip files

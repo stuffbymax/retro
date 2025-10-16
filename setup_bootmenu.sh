@@ -3,6 +3,8 @@
 #!/bin/bash
 set -e
 
+exec > >(tee -a ~/log.txt) 2>&1
+
 USER_NAME=$(whoami)
 BOOTMENU="/usr/local/bin/bootmenu.sh"
 PS3_PYTHON="/usr/local/bin/ps3_to_keys.py"
@@ -16,7 +18,7 @@ ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
 echo -e "\e[33mWARNING: This script is experimental and may NOT work as intended!\e[0m"
 echo -e "\e[33mKnown issues:\e[0m"
 echo -e "\e[33m - Keybindings may be missing or incomplete\e[0m"
-echo -e "\e[33m - Drivers may default to Intel only\e[0m"
+echo -e "\e[33m - Drivers are default to Intel only\e you have to change it depending on your GPU[0m"
 echo -e "\e[33m - Some features require manual follow-up\e[0m"
 echo -e "\e[33m - External files are not yet uploaded to GitHub\e[0m"
 echo ""
@@ -35,7 +37,7 @@ sudo apt update
 sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux 
 
 # Load uinput and add user to input group
-echo -e "\e[31mWarning: this will set up rw-rw-rw- permissions to /dev/uinput\e[0m"
+echo -e "\e[31mWarning: this will set up read write execute (rwx-rwx-rwx-) permissions to /dev/uinput\e[0m"
 
 sudo usermod -aG input $USER_NAME
 sudo modprobe uinput
@@ -189,7 +191,7 @@ CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
 1 "Launch RetroArch (fullscreen)" \
 2 "Launch IceWM Desktop" \
 3 "Launch XFCE4 Desktop" \
-4 "Launch TWM Desktop" \
+4 "Launch TWM Desktop (not finished)" \
 5 "Update System (apt upgrade)" \
 6 "Open Shell (TTY)" \
 7 "Network Configuration" \
@@ -238,11 +240,11 @@ case \$CHOICE in
 5)
     # System update with animated '===' progress bar
     clear
-    echo "=== Updating system... please wait ==="
+    echo -e  "\e[42m=== Updating system... please wait ===\e[0m"
     echo "(Full log at /tmp/apt_update.log)"
     sudo apt update -y && sudo apt upgrade -y &> /tmp/apt_update.log &
     PID=$!
-    BAR=""
+    BAR="#"
     WIDTH=40
     while kill -0 $PID 2>/dev/null; do
         if [ ${#BAR} -lt $WIDTH ]; then
@@ -261,15 +263,16 @@ case \$CHOICE in
     ;;
 6)
     clear
-    echo "=== Entering shell ==="
+    echo -e "\e[42m=== Entering shell ===\e[0m"
     echo "Type 'exit' to return to the Boot Menu."
     bash
     ;;
 7)
     clear
     echo "=== Network Configuration ==="
-    echo "Use your controller to navigate!"
-    echo "Launching nmtui..."
+    echo -e "\e[41mcurrently mapping is only set to up down left right enter back so you have to use keyboard\e[0m"
+    # echo "Use your controller to navigate!"
+    echo -e "\e[42mLaunching nmtui...\e[0m"
     sleep 1
     $PS3_PYTHON &
     PS3_PID=$!
@@ -373,6 +376,9 @@ EOF
 # Step 6.2: AntimicroX + Onboard autostart for TWM 
 # note doesnt work yet with controler 
 # -------------------------------
+
+echo "twm is not yet compatiable to antimicrox nor ps3keys.py"
+
 mkdir -p ~/.twm
 cat > ~/.twm/startup << EOF
 #!/bin/bash
@@ -473,27 +479,28 @@ sudo find . -name "*.zip" -exec unzip -o {} \;
 sudo find . -name "*.zip" -delete
 
 
- echo "All RetroArch cores downloaded and extracted."
+echo -e "\e[42mAll RetroArch cores downloaded and extracted.\e[0m"
 
 # -------------------------------
 # Step 8: Python PS3 mapper service
 # -------------------------------
- sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
- [Unit]
- Description=PS3 Controller Keyboard Mapper
- After=dev-input-joystick.device
+# sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
+# [Unit]
+# Description=PS3 Controller Keyboard Mapper
+# After=dev-input-joystick.device
 
- [Service]
- ExecStart=$PS3_PYTHON
- Restart=always
- User=root
+# [Service]
+# ExecStart=$PS3_PYTHON
+# Restart=always
+# User=root
 
- [Install]
- WantedBy=multi-user.target
- EOF
+# [Install]
+# WantedBy=multi-user.target
+# EOF
 
- sudo systemctl daemon-reload
- sudo systemctl enable ps3keys
- sudo systemctl start ps3keys
+# sudo systemctl daemon-reload
+# sudo systemctl enable ps3keys
+# sudo systemctl start ps3keys
 
-echo "=== Setup complete! Reboot to test ==="
+echo -e "\e[42m=== Setup complete! Reboot to test ===\e[0m"
+echo -e "\e[41m to check errors check./log.txt \e[0m"

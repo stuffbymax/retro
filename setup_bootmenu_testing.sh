@@ -186,7 +186,7 @@ $PS3_PYTHON &
 PS3_PID=\$!
 
 while true; do
-CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
+CHOICE=\$(dialog --clear --backtitle "Simple Boot Menu" \
 --title "Boot Menu" \
 --menu "Choose an option:" 20 60 9 \
 1 "Launch RetroArch (fullscreen)" \

@@ -54,14 +54,14 @@ PS3_PID=\$!
 
 while true; do
 CHOICE=\$(dialog --clear --backtitle "Simple Boot Menu" \
---title "Boot Menu" \
+--title "Bash Boot Menu" \
 --menu "Choose an option:" 20 60 8 \
 1 "Launch RetroArch (fullscreen)" \
 2 "Launch IceWM Desktop" \
 3 "Launch XFCE4 Desktop" \
 4 "Update System (apt upgrade)" \
-5 "Open Shell (TTY)" \
-6 "Network Configuration" \
+5 "Open Shell (TTY) (requires keyboard)" \
+6 "Network Configuration (requires keyboard)" \
 7 "Reboot" \
 8 "Shutdown" 3>&1 1>&2 2>&3)
 
@@ -115,7 +115,7 @@ case \$CHOICE in
     ;;
 5)
     clear
-    echo -e "\e[42m=== Entering shell ===\e[0m"
+    echo -e "\e[42m=== Entering shell (bash )===\e[0m"
     echo "Type 'exit' to return to the Boot Menu."
     bash
     ;;
@@ -203,6 +203,7 @@ EOF
 chmod +x ~/.icewm/startup
 
 # --- Step 7: RetroArch Cores ---
+echo "downloading retroarch lates cores"
 mkdir -p ~/.config/retroarch/cores
 cd ~/.config/retroarch/cores
 sudo wget -r -np -nH --cut-dirs=4 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/

@@ -20,6 +20,7 @@ echo -e "\e[33m - Keybindings may be missing or incomplete\e[0m"
 echo -e "\e[33m - Drivers are default to Intel only you have to change it depending on your GPU\e[0m"
 echo -e "\e[33m - Some features require manual follow-up\e[0m"
 echo -e "\e[33m - External files are not yet uploaded to GitHub\e[0m"
+echo -e "\e[33m also this script will install retroarch lates cores in .config/cores \e[0m"
 echo ""
 
 read -p "Do you want to continue? [y/N]: " CONFIRM
@@ -62,8 +63,8 @@ CHOICE=\$(dialog --clear --backtitle "Simple Boot Menu" \
 4 "Update System (apt upgrade)" \
 5 "Open Shell (TTY) (requires keyboard)" \
 6 "Network Configuration (requires keyboard)" \
-7 "Reboot" \
-8 "Shutdown" 3>&1 1>&2 2>&3)
+7 "Reboot (require sudo)" \
+8 "Shutdown (require sudo)" 3>&1 1>&2 2>&3)
 
 clear
 

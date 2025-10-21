@@ -10,6 +10,7 @@ PS3_PYTHON="/usr/local/bin/ps3_to_keys.py"
 ICEWM_MENU="$HOME/.icewm/menu"
 AUTOSTART_DIR="$HOME/.config/autostart"
 ANTIMICROX_PROFILE="$HOME/.config/antimicrox/bootmenu_gamepad_profile.amgp"
+conf="retro/config"
 
 # -------------------------------
 # WARNING / ACKNOWLEDGEMENT
@@ -32,7 +33,44 @@ fi
 
 # === Install required packages ===
 sudo apt update
-sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux
+sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux
+
+# here make script for select your gpu driver.eg. 1. (Intel), 2.(AMD) 3. (Nvidia)
+echo -e "please select GPU Driver"
+echo -e "1) Intel"
+echo -e "2) AMD"
+echo -e "3) ATI"
+echo -e "4) Nvidia (open source)"
+echo -e "5) Nvidia (propriatery)"
+
+read -p "Enter your choice (1 or 3): " choice
+
+case $choice in
+    1)
+        echo "You selected 1. installing Intel..."
+        sudo apt install -y xserver-xorg-video-intel
+        ;;
+    2)
+        echo "You selected 2. installing AMD..."
+        sudo apt install -y xserver-xorg-video-amdgpu
+        ;;
+    3)
+        echo "You selected 3. installing ATI..."
+        sudo apt install -y xserver-xorg-video-ati
+        ;;
+    4)
+        echo "You selected 4. installing Nvidia (open source)..."
+        sudo apt install -y xserver-xorg-video-nouveau
+        ;;
+    5)
+        echo "You selected 5. installing Nvidia (open source)..."
+        sudo apt install -y nvidia-driver
+        ;;
+    *)
+        echo "Invalid choice. Please run the script again and select 1 or 5."
+        ;;
+esac
+
 
 # uinput and permissions
 sudo usermod -aG input $USER_NAME
@@ -211,6 +249,9 @@ sudo wget -r -np -nH --cut-dirs=4 -A "*.zip" https://buildbot.libretro.com/night
 sudo find . -name "*.zip" -exec unzip -o {} \;
 sudo find . -name "*.zip" -delete
 echo -e "\e[42mAll RetroArch cores downloaded and extracted.\e[0m"
+
+# ---step 8: configs ---
+echo -e "conf will be here"
 
 # --- Done ---
 echo -e "\e[42m=== Setup complete! Reboot to test ===\e[0m"

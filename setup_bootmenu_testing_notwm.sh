@@ -33,7 +33,13 @@ fi
 
 # === Install required packages ===
 sudo apt update
+echo "update complete"
 sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux
+echo "installed necesery software"
+
+echo "installing retro arch assets"
+sudo apt -y install retroarch-assets
+echo "retro arch assets completed"
 
 # here make script for select your gpu driver.eg. 1. (Intel), 2.(AMD) 3. (Nvidia)
 echo -e "please select GPU Driver"
@@ -43,7 +49,7 @@ echo -e "3) ATI"
 echo -e "4) Nvidia (open source)"
 echo -e "5) Nvidia (propriatery)"
 
-read -p "Enter your choice (1 or 3): " choice
+read -p "Enter your choice (1 or 5): " choice
 
 case $choice in
     1)

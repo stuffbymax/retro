@@ -259,6 +259,9 @@ echo -e "\e[42mAll RetroArch cores downloaded and extracted.\e[0m"
 # ---step 8: configs ---
 echo -e "conf will be here"
 
+mv "$conf"/* "${USER_NAME}.conf"
+
+
 # --- Done ---
 echo -e "\e[42m=== Setup complete! Reboot to test ===\e[0m"
 echo -e "\e[41mTo check errors, read ./log.txt\e[0m"

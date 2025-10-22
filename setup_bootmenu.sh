@@ -31,15 +31,76 @@ if [[ "$CONFIRM" != "y" ]]; then
 fi
 
 
+conf="retro/config"
+# -------------------------------
+# WARNING / ACKNOWLEDGEMENT
+# -------------------------------
+echo -e "\e[33mWARNING: This script is experimental and may NOT work as intended!\e[0m"
+echo -e "\e[33mKnown issues:\e[0m"
+echo -e "\e[33m - Keybindings may be missing or incomplete\e[0m"
+echo -e "\e[33m - Drivers are default to Intel only you have to change it depending on your GPU\e[0m"
+echo -e "\e[33m - Some features require manual follow-up\e[0m"
+echo -e "\e[33m - External files are not yet uploaded to GitHub\e[0m"
+echo -e "\e[33m also this script will install retroarch lates cores in .config/cores \e[0m"
+echo ""
 
-#echo "=== Install required packages ==="
+read -p "Do you want to continue? [y/N]: " CONFIRM
+CONFIRM=${CONFIRM,,}
+if [[ "$CONFIRM" != "y" ]]; then
+    echo "Exiting script. No changes were made."
+    exit 1
+fi
+
+# === Install required packages ===
 sudo apt update
-sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all xserver-xorg-video-vesa dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux 
+echo "update complete"
+sudo apt install -y retroarch icewm xfce4 xfce4-goodies xinit xserver-xorg-core xserver-xorg-input-all dialog sudo antimicrox unzip python3-evdev python3-uinput wget curl neovim tmux
+echo "installed necesery software"
+
+echo "installing retro arch assets"
+sudo apt -y install retroarch-assets
+echo "retro arch assets completed"
+
+# here make script for select your gpu driver.eg. 1. (Intel), 2.(AMD) 3. (Nvidia)
+echo -e "please select GPU Driver"
+echo -e "1) Intel"
+echo -e "2) AMD"
+echo -e "3) ATI"
+echo -e "4) Nvidia (open source)"
+echo -e "5) Nvidia (propriatery)"
+
+read -p "Enter your choice (1 or 5): " choice
+
+case $choice in
+    1)
+        echo "You selected 1. installing Intel..."
+        sudo apt install -y xserver-xorg-video-intel
+        ;;
+    2)
+        echo "You selected 2. installing AMD..."
+        sudo apt install -y xserver-xorg-video-amdgpu
+        ;;
+    3)
+        echo "You selected 3. installing ATI..."
+        sudo apt install -y xserver-xorg-video-ati
+        ;;
+    4)
+        echo "You selected 4. installing Nvidia (open source)..."
+        sudo apt install -y xserver-xorg-video-nouveau
+        ;;
+    5)
+        echo "You selected 5. installing Nvidia (open source)..."
+        sudo apt install -y nvidia-driver
+        ;;
+    *)
+        echo "Invalid choice. Please run the script again and select 1 or 5."
+        ;;
+esac
 
 # Load uinput and add user to input group
 echo -e "\e[31mWarning: this will set up read write execute (rwx-rwx-rwx-) permissions to /dev/uinput\e[0m"
 
-sudo usermod -aG input $USER_NAME
+#sudo usermod -aG input $USER_NAME
 sudo modprobe uinput
 sudo chmod 777 /dev/uinput
 
@@ -191,12 +252,11 @@ CHOICE=\$(dialog --clear --backtitle "Debian Boot Menu" \
 1 "Launch RetroArch (fullscreen)" \
 2 "Launch IceWM Desktop" \
 3 "Launch XFCE4 Desktop" \
-4 "Launch TWM Desktop (not finished)" \
-5 "Update System (apt upgrade)" \
-6 "Open Shell (TTY)" \
-7 "Network Configuration" \
-8 "Reboot" \
-9 "Shutdown" 3>&1 1>&2 2>&3)
+4 "Update System (apt upgrade)" \
+5 "Open Shell (TTY)" \
+6 "Network Configuration" \
+7 "Reboot" \
+8 "Shutdown" 3>&1 1>&2 2>&3)
 
 
 clear
@@ -229,15 +289,6 @@ case \$CHOICE in
     PS3_PID=\$!
     ;;
 4)
-    kill $PS3_PID 2>/dev/null || true
-    echo "exec twm" > ~/.xinitrc
-    antimicrox --hidden --profile $ANTIMICROX_PROFILE &
-    onboard &
-    startx
-    $PS3_PYTHON &
-    PS3_PID=$!
-    ;;
-5)
     # System update with animated '===' progress bar
     clear
     echo -e  "\e[42m=== Updating system... please wait ===\e[0m"
@@ -261,13 +312,13 @@ case \$CHOICE in
     echo "exiting"
     exit
     ;;
-6)
+5)
     clear
     echo -e "\e[42m=== Entering shell ===\e[0m"
     echo "Type 'exit' to return to the Boot Menu."
     bash
     ;;
-7)
+6)
     clear
     echo "=== Network Configuration ==="
     echo -e "\e[41mcurrently mapping is only set to up down left right enter back so you have to use keyboard\e[0m"
@@ -281,11 +332,11 @@ case \$CHOICE in
     echo "Network configuration done!"
     sleep 2
     ;;
-8)
+7)
     kill $PS3_PID 2>/dev/null || true
     sudo reboot
     ;;
-9)
+8)
     kill $PS3_PID 2>/dev/null || true
     sudo shutdown now
     ;;
@@ -370,100 +421,6 @@ NoDisplay=false
 X-GNOME-Autostart-enabled=true
 Name=Onboard
 Comment=Start Onboard on-screen keyboard
-EOF
-
-# -------------------------------
-# Step 6.2: AntimicroX + Onboard autostart for TWM 
-# note doesnt work yet with controler 
-# -------------------------------
-
-echo "twm is not yet compatiable to antimicrox nor ps3keys.py"
-
-mkdir -p ~/.twm
-cat > ~/.twm/startup << EOF
-#!/bin/bash
-# Start AntimicroX with profile
-antimicrox --hidden --profile $ANTIMICROX_PROFILE &
-
-# Start Onboard on-screen keyboard
-onboard &
-EOF
-chmod +x ~/.twm/startup
-
-###
-# TWM configuration
-###
-
-# Create TWM directories
-mkdir -p ~/.twm
-mkdir -p ~/.twm/walls
-mkdir -p ~/.twm/icons
-
-# -------------------------------
-# ~/.twm/colors
-# -------------------------------
-cat > ~/.twm/colors << 'EOF'
-Color
-{
-    BorderColor         "#303639"
-    DefaultBackground   "White"
-    DefaultForeground   "Black"
-
-    TitleBackground     "Firebrick"
-    TitleForeground     "White"
-
-    MenuTitleBackground "Firebrick"
-    MenuTitleForeground "White"
-
-    MenuBackground      "#FFFFFF"
-    MenuForeground      "#303639"
-
-    MenuShadowColor     "#303639"
-    MenuBorderColor     "#303639"
-}
-EOF
-
-# -------------------------------
-# ~/.twm/twmrc
-# -------------------------------
-cat > ~/.twm/twmrc << 'EOF'
-# Window border and menu settings
-BorderWidth 1
-FramePadding 1
-TitleButtonBorderWidth 0
-TitlePadding 2
-ButtonIndent 0
-MenuBorderWidth 1
-NoMenuShadows
-
-# Title bar buttons
-IconDirectory "$HOME/.twm/icons"
-LeftTitleButton "resize.xbm"=f.resize
-RightTitleButton "minimize.xbm"=f.iconify
-RightTitleButton "maximize.xbm"=f.fullzoom
-RightTitleButton "close.xbm"=f.delete
-
-# Mouse settings and window behaviors
-Button1 = : root : f.menu "RootMenu"
-Button2 = : root : f.menu "System"
-Button3 = : root : f.menu "TwmWindows"
-
-Movedelta 1
-Button1 = :title: f.function "raise-lower-move"
-Function "raise-lower-move" { f.move f.raiselower }
-
-Button2 = : title|frame : f.menu "WindowMenu"
-Button3 = : title|frame : f.resize
-Button1 = m : window : f.move
-Button3 = s : window : f.resize
-
-Function "winup" { f.circleup }
-"Tab" = m : root|window|frame|title : f.function "winup"
-
-Button1 = m : title|frame : f.zoom
-Button3 = m : title|frame : f.horizoom
-
-DefaultFunction f.nop
 EOF
 
 

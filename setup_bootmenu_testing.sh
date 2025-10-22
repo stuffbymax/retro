@@ -213,7 +213,9 @@ for event in device.read_loop():
 EOF
 sudo chmod 777 $PS3_PYTHON
 
-# --- Step 2: Boot Menu Script ---
+# -------------------------------
+# Step 2: Boot Menu Script
+# -------------------------------
 sudo tee $BOOTMENU > /dev/null << EOF
 #!/bin/bash
 $PS3_PYTHON &
@@ -312,7 +314,9 @@ done
 EOF
 sudo chmod +x $BOOTMENU
 
-# --- Step 3: Auto-login + boot menu on tty1 ---
+# -------------------------------
+# Step 3: Auto-login on tty1
+# -------------------------------
 sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
 sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf > /dev/null << EOF
 [Service]
@@ -322,6 +326,7 @@ EOF
 sudo systemctl daemon-reexec
 grep -qxF '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' ~/.bash_profile || \
 echo '[ "$(tty)" = "/dev/tty1" ] && exec /usr/local/bin/bootmenu.sh' >> ~/.bash_profile
+
 
 # --- Step 4: IceWM Menu ---
 mkdir -p "$(dirname "$ICEWM_MENU")"

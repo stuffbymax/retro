@@ -482,26 +482,8 @@ sudo find . -name "*.zip" -delete
 
 echo -e "\e[42mAll RetroArch cores downloaded and extracted.\e[0m"
 
-# -------------------------------
-# Step 8: Python PS3 mapper service
-# -------------------------------
-# sudo tee /etc/systemd/system/ps3keys.service > /dev/null << EOF
-# [Unit]
-# Description=PS3 Controller Keyboard Mapper
-# After=dev-input-joystick.device
+cd -r "$conf"/* ".config/"
 
-# [Service]
-# ExecStart=$PS3_PYTHON
-# Restart=always
-# User=root
-
-# [Install]
-# WantedBy=multi-user.target
-# EOF
-
-# sudo systemctl daemon-reload
-# sudo systemctl enable ps3keys
-# sudo systemctl start ps3keys
 
 echo -e "\e[42m=== Setup complete! Reboot to test ===\e[0m"
 echo -e "\e[41m to check errors check./log.txt \e[0m"

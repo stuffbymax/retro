@@ -418,7 +418,8 @@ sudo find . -name "*.zip" -delete
 
 echo -e "\e[42mAll RetroArch cores downloaded and extracted.\e[0m"
 
-cd -r "$conf"/* ".config/"
+cd ~
+cp -r "$conf"/* ".config/"
 
 
 echo -e "\e[42m=== Setup complete! Reboot to test ===\e[0m"

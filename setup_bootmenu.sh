@@ -31,26 +31,6 @@ if [[ "$CONFIRM" != "y" ]]; then
 fi
 
 
-conf="retro/config"
-# -------------------------------
-# WARNING / ACKNOWLEDGEMENT
-# -------------------------------
-echo -e "\e[33mWARNING: This script is experimental and may NOT work as intended!\e[0m"
-echo -e "\e[33mKnown issues:\e[0m"
-echo -e "\e[33m - Keybindings may be missing or incomplete\e[0m"
-echo -e "\e[33m - Drivers are default to Intel only you have to change it depending on your GPU\e[0m"
-echo -e "\e[33m - Some features require manual follow-up\e[0m"
-echo -e "\e[33m - External files are not yet uploaded to GitHub\e[0m"
-echo -e "\e[33m also this script will install retroarch lates cores in .config/cores \e[0m"
-echo ""
-
-read -p "Do you want to continue? [y/N]: " CONFIRM
-CONFIRM=${CONFIRM,,}
-if [[ "$CONFIRM" != "y" ]]; then
-    echo "Exiting script. No changes were made."
-    exit 1
-fi
-
 # === Install required packages ===
 sudo apt update
 echo "update complete"
@@ -428,14 +408,13 @@ EOF
 # Step 7: Latest Download RetroArch cores (all .zip files)
 # Because debian has older files
 # ------------------------------- 
-mkdir .config/retroarch/cores
-cd ".config/retroarch/cores"
 
-# # Fetch list of .zip files
+echo "downloading retroarch lates cores"
+mkdir -p ~/.config/retroarch/cores
+cd ~/.config/retroarch/cores
 sudo wget -r -np -nH --cut-dirs=4 -A "*.zip" https://buildbot.libretro.com/nightly/linux/x86_64/latest/
 sudo find . -name "*.zip" -exec unzip -o {} \;
 sudo find . -name "*.zip" -delete
-
 
 echo -e "\e[42mAll RetroArch cores downloaded and extracted.\e[0m"
 
@@ -443,4 +422,3 @@ cd -r "$conf"/* ".config/"
 
 
 echo -e "\e[42m=== Setup complete! Reboot to test ===\e[0m"
-echo -e "\e[41m to check errors check./log.txt \e[0m"

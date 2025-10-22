@@ -422,3 +422,4 @@ cd -r "$conf"/* ".config/"
 
 
 echo -e "\e[42m=== Setup complete! Reboot to test ===\e[0m"
+echo -e "\e[41mTo check errors, read ./log.txt\e[0m"

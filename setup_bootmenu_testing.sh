@@ -386,7 +386,8 @@ echo -e "\e[42mAll RetroArch cores downloaded and extracted.\e[0m"
 # ---step 8: configs ---
 echo -e "conf will be here"
 
-mv "$conf"/* "${USER_NAME}.conf"
+cd ~
+cd -r "$conf"/* ".config/"
 
 
 # --- Done ---

@@ -6,7 +6,8 @@
 echo "Choose installation method:"
 echo "1) Install prebuilt packages (apt)"
 echo "2) Compile from source (manual)"
-read -p "Enter 1 or 2: " method
+echo "3) exit"
+read -p "Enter 1 or 3: " method
 
 if [ "$method" = "1" ]; then
     echo "Updating package list..."
@@ -66,6 +67,10 @@ elif [ "$method" = "2" ]; then
     sudo make install
 
     echo "Repeat compilation steps for other emulators as needed."
+
+elif ["$method" = 3 ]; then 
+    echo "exit it anisiated"
+    exit
 
 else
     echo "Invalid choice. Exiting."
